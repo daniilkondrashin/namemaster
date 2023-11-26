@@ -134,6 +134,9 @@ body {
     justify-content: center;
     align-items: center;
 }
+.form__button:host {
+    background: #B14DFF;
+}
 .form__button-img {
 }
 .message-items {
@@ -153,4 +156,37 @@ body {
 .message-item__icon {
 }
 .message-item__text {
+}
+.footer {
+    width: 100%;
+    height: 50px;
+    background: #303F9F;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+.footer__text {
+    color: #FFF;
+}
+.footer__text-link {
+    color: #FFF;
+    background: 
+    linear-gradient(currentColor 0 0) 
+    bottom /var(--d, 0) 1px 
+    no-repeat;
+    transition:0.3s;
+}
+.footer__text-link:link {
+    color: #FFF;
+}
+.footer__text-link:active {
+    color: #FFF;
+}
+.footer__text-link:hover {
+    color: #FFF;
+    --d: 100%;
+}
+.footer__text-link:visited {
+    color: #FFF;
 }
