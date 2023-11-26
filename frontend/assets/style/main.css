@@ -27,8 +27,10 @@ body {
     line-height: 24px; 
 }
 .header__history {
+    cursor: pointer;
 }
 .header__history-icon {
+    fill: #fff;
 }
 .main {
     flex: 1 1 auto;
@@ -48,6 +50,11 @@ body {
     z-index: 10;
     opacity: 0;
     visibility: hidden;
+    transition: 0.3s;
+}
+.history-menu-visible {
+    opacity: 1;
+    visibility: visible;
 }
 .menu__header {
     border-radius: 15px 15px 0px 0px;
@@ -72,6 +79,11 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    transition: 0.3s;
+    cursor: pointer;
+}
+.menu__header-icon:hover {
+    background: #B14DFF;
 }
 .menu__main-items {
     
@@ -99,6 +111,11 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.menu__footer-button:hover {
+    background: #B14DFF;
 }
 .form {
     display: flex;
@@ -117,6 +134,10 @@ body {
     font-size: 20px;
     font-weight: 600;
     line-height: 20px;
+    transition: 0.3s;
+}
+.form__input:focus {
+    border: 3px solid #7C4DFF;
 }
 .form__input::placeholder {
     color: #757575;
@@ -133,8 +154,9 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    transition: 0.3s;
 }
-.form__button:host {
+.form__button:hover {
     background: #B14DFF;
 }
 .form__button-img {
