@@ -1,0 +1,67 @@
+@media (max-width: 750px) {
+    ._content {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    .header {
+        height: 50px;
+        border-radius: 0px 0px 0px 0px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .header__logo {
+        color: #FFF;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 24px; 
+        grid-column: 2 / 3;
+        align-items: center;
+        justify-self: center;
+    }
+    .header__history {
+        cursor: pointer;
+        grid-column: 3 / 3;
+        align-items: center;
+        justify-self: end;
+    }
+    .header__history-icon {
+        height: 36px;
+        width: 36px;
+    }
+    .form__input {
+        height: 40px;
+        border: 2px solid #BDBDBD;
+        font-size: 16px;
+    }
+    .form__input::placeholder {
+        color: #757575;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    .form__input:focus {
+        border: 2px solid #7C4DFF;
+    }
+    .form__button {
+        width: 44px;
+        height: 44px;
+    }
+    .message-items {
+        margin-top: 15px;
+    }
+    .message-item {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        gap: 15px;
+    }
+    .message-item__icon {
+        height: 20px;
+        width: 20px;
+    }
+    .message-item__text {
+        font-size: 16px;
+    }
+    .footer__text {
+        font-size: 14px;
+    }
+}
