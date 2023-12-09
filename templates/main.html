@@ -33,12 +33,9 @@
                     </div>
                 </div>
                 <ul class="menu__main-items">
-                    <li class="menu__main-item">Daniel</li>
-                    <li class="menu__main-item">Daniel</li>
-                    <li class="menu__main-item">Daniel</li>
-                    <li class="menu__main-item">Daniel</li>
-                    <li class="menu__main-item">Daniel</li>
-                    <li class="menu__main-item">Daniel</li>
+                    {% for message in messages %}
+                    <li class="menu__main-item">{{ message.text }}</li>
+                    {% endfor %}
                 </ul>
                 <div class="menu__footer">
                     <div class="menu__footer-button">Clear History</div>
@@ -53,12 +50,12 @@
                 </button>
             </form>
             <div class="message-items">
-                {% for message in messages %}
+                {% for message in messagesSession %}
                 <div class="message-item">
                     <svg class="message-item__icon" xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none">
                         <path d="M3.75033 16.25L23.2328 16.25L16.6166 22.8662C16.1285 23.3544 16.1285 24.1456 16.6166 24.6338C17.1047 25.1219 17.8963 25.1219 18.3844 24.6338L27.1344 15.8837C27.6225 15.3956 27.6225 14.6041 27.1344 14.1163L18.3844 5.36625C18.1403 5.12219 17.8206 5 17.5003 5C17.1806 5 16.8606 5.12219 16.6166 5.36625C16.1285 5.85438 16.1285 6.64594 16.6166 7.13375L23.2328 13.75L3.75033 13.75C3.06002 13.75 2.50033 14.3097 2.50033 15C2.50033 15.6903 3.06002 16.25 3.75033 16.25Z" fill="black"/>
                     </svg>
-                    <div>{{ message.text }}</div>
+                    <div>Hi {{ message.text }}!</div>
                     <span class="message-item__text"></span>
                 </div>
                 {% endfor %}
