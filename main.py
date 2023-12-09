@@ -9,7 +9,7 @@ from sqlalchemy import desc
 app = Flask(__name__)
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres:68017346@localhost/namemaster'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres:password@localhost/namemaster'
 db = SQLAlchemy(app)
 
 Messages = namedtuple('Messages', 'text')
