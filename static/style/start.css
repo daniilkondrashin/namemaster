@@ -1,0 +1,51 @@
+.wrapper {
+    /* background: -webkit-linear-gradient(117deg, #87d7b4,#41c0fb,#cb5bf1);Chrome 10-25, Safari 5.1-6 */
+    /* background: linear-gradient(117deg, #87d7b4,#41c0fb,#cb5bf1);W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    background: -webkit-linear-gradient(26deg, #80e5ff,#00aaff,#092cc8);/* Chrome 10-25, Safari 5.1-6 */                          
+    background: linear-gradient(26deg, #80e5ff,#00aaff,#092cc8);/* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */                                             
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+}
+.start__text {
+    color: #FFF;
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 24px; 
+    margin-bottom: 100px;
+}
+.start__button {
+    width: 100%;
+    max-width: 600px;
+    height: 60px;
+    background: #7C4DFF;
+    border-radius: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #FFF;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 24px; 
+    margin-bottom: 40px;
+    transition: 0.3s;
+}
+.start__button:link {
+    color: #FFF;
+}
+.start__button:active  {
+    color: #FFF;
+}
+.start__button:hover {
+    color: #FFF;
+}
+.start__button:visited {
+    color: #FFF;
+}
+.start__button:hover {
+    background: #B14DFF;
+}
