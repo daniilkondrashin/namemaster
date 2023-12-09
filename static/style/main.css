@@ -36,7 +36,6 @@ body {
     flex: 1 1 auto;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     position: relative;
 }
 .history-menu {
@@ -118,6 +117,7 @@ body {
     background: #B14DFF;
 }
 .form {
+    margin-top: 250px;
     display: flex;
     justify-content: flex-end;
     align-items: center;
