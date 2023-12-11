@@ -46,3 +46,9 @@ def main():
         return redirect(url_for('main'))
     return render_template('main.html', messagesSession=messagesSession, messages=Message.query.order_by(desc(Message.id)).limit(5).all(), form=form)
 
+@app.route("/delete_data", methods=['POST'])
+def delete_data():
+    if request.method == 'POST':
+        db.session.query(Message).delete()
+        db.session.commit()
+        return redirect(url_for('main'))

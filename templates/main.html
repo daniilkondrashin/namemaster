@@ -37,9 +37,9 @@
                     <li class="menu__main-item">{{ message.text }}</li>
                     {% endfor %}
                 </ul>
-                <div class="menu__footer">
-                    <div class="menu__footer-button">Clear History</div>
-                </div>
+                <form class="menu__footer" method="post" action="/delete_data">
+                    <button class="menu__footer-button" type="submit">Clear History</button>
+                </form>
             </div>
             <form class="form" method="post" action="" >
                 {{ form.hidden_tag() }}
