@@ -41,8 +41,9 @@
                     <div class="menu__footer-button">Clear History</div>
                 </div>
             </div>
-            <form class="form" method="post" action="/add_message" >
-                <input type="text" name="text" class="form__input" placeholder="Enter your name">
+            <form class="form" method="post" action="" >
+                {{ form.hidden_tag() }}
+                {{ form.name(class_="form__input", placeholder="Enter your name") }}
                 <button class="form__button" type="submit">
                     <svg class="form__button-img" xmlns="http://www.w3.org/2000/svg" width="55" height="55" viewBox="0 0 55 55" fill="none">
                         <path d="M6.87558 29.7917L42.5935 29.7917L30.4637 41.9215C29.5688 42.8164 29.5688 44.267 30.4637 45.1619C31.3586 46.0568 32.8098 46.0568 33.7047 45.1619L49.7464 29.1202C50.6413 28.2253 50.6413 26.7741 49.7464 25.8798L33.7047 9.83813C33.2573 9.39068 32.6712 9.16667 32.0839 9.16667C31.4978 9.16667 30.9112 9.39068 30.4637 9.83813C29.5688 10.733 29.5688 12.1842 30.4637 13.0785L42.5935 25.2083L6.87558 25.2083C5.61001 25.2083 4.58392 26.2344 4.58392 27.5C4.58392 28.7656 5.61001 29.7917 6.87558 29.7917Z" fill="white"/>
@@ -62,7 +63,7 @@
             </div>
         </div>
         <div class="footer">
-            <div class="footer__text">Check out the project on github: <a href="https://github.com/daniilkondrashin/namester" class="footer__text-link" target="_blank">https://github.com/daniilkondrashin/namester</a></div>
+            <div class="footer__text">Check out the project on github: <a href="https://github.com/daniilkondrashin/namemaster" class="footer__text-link" target="_blank">https://github.com/daniilkondrashin/namemaster</a></div>
         </div>
     </div>
     <script type="text/javascript" src="static/javascript/history.js"></script>
