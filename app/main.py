@@ -9,6 +9,8 @@ from form import Name
 app = Flask(__name__)
 
 
+
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres:68017346@localhost/namemaster'
 app.config['SECRET_KEY'] = '3f6f301d28743848cdabfce5dca93a92'  
 db = SQLAlchemy(app)
