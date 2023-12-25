@@ -4,11 +4,9 @@ from collections import namedtuple
 from flask import Flask, render_template, redirect, url_for, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import desc
-from form import Name
+from .form import Name
 
 app = Flask(__name__)
-
-
 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres:68017346@localhost/namemaster'
