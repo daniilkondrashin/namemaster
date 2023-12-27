@@ -1,16 +1,20 @@
+import os
 from collections import namedtuple
-
 
 from flask import Flask, render_template, redirect, url_for, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import desc
-from .form import Name
+from dotenv import load_dotenv, find_dotenv
+
+from form import Name
+
+load_dotenv(find_dotenv())
 
 app = Flask(__name__)
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres:68017346@localhost/namemaster'
-app.config['SECRET_KEY'] = '3f6f301d28743848cdabfce5dca93a92'  
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DB')
+app.config['SECRET_KEY'] = os.getenv('S_KEY')  
 db = SQLAlchemy(app)
 
 Messages = namedtuple('Messages', 'text')
