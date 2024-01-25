@@ -1,5 +1,5 @@
 run_test:
-  image: 3.10.12-slim
+  image: python:3.10.12-slim
   before_script:
     - apt-get update
   script:
