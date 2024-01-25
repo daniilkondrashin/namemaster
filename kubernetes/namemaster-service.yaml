@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: namemaster
+  namespace: namemaster
+  labels:
+    app.kubernetes.io/name: namemaster
+    app.kubernetes.io/component: web
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 5000
+      protocol: TCP
+      name: namemaster
+  selector:
+    app.kubernetes.io/name: namemaster
+    app.kubernetes.io/component: web
