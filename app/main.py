@@ -13,7 +13,7 @@ load_dotenv(find_dotenv())
 app = Flask(__name__)
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DB')
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{os.environ['username']}:{os.environ['password']}@{os.environ['host']}:{os.environ['port']}/{os.environ['database']}"
 app.config['SECRET_KEY'] = os.getenv('S_KEY')  
 db = SQLAlchemy(app)
 
@@ -56,3 +56,6 @@ def delete_data():
         db.session.query(Message).delete()
         db.session.commit()
         return redirect(url_for('main'))
+    
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
