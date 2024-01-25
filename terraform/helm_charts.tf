@@ -30,10 +30,6 @@ resource "helm_release" "postgresql" {
   name      = "postgresql"
   chart     = "bitnami/postgresql"
   namespace  = var.namemaster_namespace
-  set {
-    name  = "postgresqlPassword"
-    value = "6ETSt%WE6x7jSuQG*47poB"  # Установите ваш пароль
-  }
 
   # Добавьте другие параметры Helm, если необходимо
 }
