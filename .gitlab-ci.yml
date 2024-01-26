@@ -1,3 +1,4 @@
+image: creatiwww/docker-compose:latest
 stages:
   - test
 
