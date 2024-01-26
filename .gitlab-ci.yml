@@ -14,7 +14,7 @@ services:
 
 before_script:
   - apk add --no-cache docker-compose
-  - docker-compose -f docker-compose.test.yaml up -d 
+  - docker-compose -f docker-compose.test.yaml up 
 test:
   stage: test
   script:
