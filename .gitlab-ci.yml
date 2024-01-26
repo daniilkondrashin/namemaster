@@ -32,6 +32,6 @@ test:
   script:
     - ls
     - source venv/bin/activate
-    - pip install -r requirements.txt
+    - pip install -r app/requirements.txt
     - flask db upgrade
     - pytest
