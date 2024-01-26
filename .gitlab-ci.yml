@@ -6,7 +6,6 @@ services:
   - docker:dind
 
 before_script:
-  - apt-get update -qy
   - apt-get install -y docker-compose
 test:
   stage: test
