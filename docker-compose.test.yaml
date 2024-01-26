@@ -3,7 +3,7 @@ version: '3'
 services:
   web:
     image: python:3.8
-    command: bash -c "pip install -r app/requirements.txt && pytest app/tests/unittest.py"
+    command: bash -c "pip install --upgrade pip && pip install -r app/requirements.txt && pytest app/tests/unittest.py"
     volumes:
       - ./app:/app
     ports:
