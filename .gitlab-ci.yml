@@ -18,7 +18,8 @@ before_script:
 test:
   stage: test
   script:
-    - docker exec -it namemaster_web_1 python -m pytest
+    - cd app/tests
+    - ls
    
 
 # after_script:
