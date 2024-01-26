@@ -1,4 +1,4 @@
-image: creatiwww/docker-compose:latest
+image: python:3.8
 stages:
   - test
 
