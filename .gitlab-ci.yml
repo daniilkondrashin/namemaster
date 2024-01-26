@@ -17,8 +17,7 @@ before_script:
 test:
   stage: test
   script:
-    - docker-compose -f docker-compose.test.yaml up -d
-    - docker-compose logs web
+    - docker-compose -f docker-compose.test.yaml up -d &&  docker-compose logs web
    
 
 after_script:
