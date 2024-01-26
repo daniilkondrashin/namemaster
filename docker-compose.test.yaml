@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+  web:
+    image: python:3.8
+    command: bash -c "pip install -r app/requirements.txt && pytest app/tests/unittest.py"
+    volumes:
+      - ./app:/app
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    environment:
+        username: postgres
+        password: password
+        host: db
+        port: 5432
+        database: mydatabase
+
+  db:
+    image: postgres:12
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydatabase
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
