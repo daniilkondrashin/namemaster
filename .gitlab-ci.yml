@@ -1,25 +1,16 @@
-image: python:3.8
+image: creatiwww/docker-compose:latest
 stages:
   - test
-
-variables:
-  POSTGRES_DB: "your_db_name"
-  POSTGRES_USER: "your_db_user"
-  POSTGRES_PASSWORD: "your_db_password"
-  FLASK_ENV: "testing"
-  FLASK_APP: "your_app:create_app"
 
 services:
   - docker:19.03.13-dind
 
 before_script:
-  - apk add --no-cache docker-compose
-  - docker-compose -f docker-compose.test.yaml up 
+  - apk add --no-cache docker-compose 
 test:
   stage: test
   script:
-    - cd app/tests
-    - docker ps
+    - docker-compose -f docker-compose.test.yaml up
    
 
 # after_script:
