@@ -33,5 +33,4 @@ test:
     - ls
     - source venv/bin/activate
     - pip install -r app/requirements.txt
-    - flask db upgrade
-    - pytest
+    - pytest app/tests/unittest.py
