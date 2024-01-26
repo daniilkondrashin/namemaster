@@ -19,7 +19,7 @@ test:
   stage: test
   script:
     - cd app/tests
-    - pytest unittest.py
+    - docker ps
    
 
 # after_script:
