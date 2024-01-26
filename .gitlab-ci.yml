@@ -1,28 +1,35 @@
-image: rbekker87/build-tools:latest
-
 stages:
-  - ver
-  - init
-  - tests
+  - test
 
-ver:
-  stage: ver
-  script:
-    - python --version
-    - whoami
+variables:
+  FLASK_ENV: "testing"
+  FLASK_APP: "your_app:create_app"
+  DOCKER_IMAGE_NAME: "your-dockerhub-username/your-docker-image"
+  DOCKER_IMAGE_TAG: "latest"
+  KUBE_NAMESPACE: "your-kube-namespace"
+  KUBE_CONFIG: "your-kube-config" # Содержимое файла kubeconfig, base64 закодированное
+  POSTGRES_DB: "postgres"
+  POSTGRES_USER: "postgres"
+  POSTGRES_PASSWORD: "password"
+  POSTGRES_HOST: "db"
+  POSTGRES_PORT: "5432"
+  username: postgres
+  password: password
+  host: db
+  port: 5432
+  database: mydatabase
 
-init:
-  stage: init
+before_script:
+  - apt-get update -qy
+  - apt-get install -y python3-pip python3-dev
+  - pip3 install virtualenv
+  - virtualenv venv
+
+test:
+  stage: test
   script:
-    - apk add postgresql
-    - pip install psycopg2-binary
     - ls
+    - source venv/bin/activate
     - pip install -r requirements.txt
-
-# run_tests:
-#   stage: tests
-#   script:
-#     - apk add postgresql-dev --no-cache
-#     - pip install psycopg2-binary
-#     - pip install -r requirements.txt
-#     - python tests.py
+    - flask db upgrade
+    - pytest
