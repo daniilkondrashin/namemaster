@@ -18,7 +18,7 @@ test:
   stage: test
   script:
     - docker-compose -f docker-compose.test.yaml up -d
-    - docker compose logs 
+    - docker compose logs namemaster_web_1
    
 
 after_script:
