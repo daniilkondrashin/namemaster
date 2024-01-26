@@ -1,3 +1,4 @@
+image: creatiwww/docker-compose:latest
 stages:
   - test
 
@@ -10,6 +11,7 @@ before_script:
 test:
   stage: test
   script:
+    - docker-compose build
     - docker-compose -f docker-compose.test.yaml up
    
 
