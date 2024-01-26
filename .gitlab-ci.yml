@@ -1,9 +1,8 @@
-image: creatiwww/docker-compose:latest
 stages:
   - test
 
 services:
-  - docker:19.03.13-dind
+  - docker:dind
 
 before_script:
   - apk add --no-cache docker-compose 
