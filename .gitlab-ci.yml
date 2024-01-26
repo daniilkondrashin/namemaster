@@ -24,8 +24,8 @@ before_script:
   - ls
   - apt-get update -qy
   - apt-get install -y python3-pip python3-dev
-  - apt install python3-venv
-  - python3 -m venv env
+  - pip3 install virtualenv
+  - virtualenv venv
 
 test:
   stage: test
