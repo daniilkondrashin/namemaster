@@ -18,7 +18,6 @@ before_script:
 test:
   stage: test
   script:
-    - docker-compose -f docker-compose.test.yaml up -d
+    - docker-compose -f docker-compose.test.yaml up --exit-code-from web  
 
-after_script:
-  - docker-compose down
+
