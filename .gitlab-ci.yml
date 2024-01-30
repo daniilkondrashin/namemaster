@@ -1,10 +1,9 @@
 stages:
   - test
-  - docker_build
   - docker_deploy
 variables:
   IMAGE_NAME: daniil3680/namemaster
-  IMAGE_TAG: 0.0.2 
+  IMAGE_TAG: 0.0.2-R1
 services:
   - docker:25.0.1-dind
 
@@ -16,9 +15,9 @@ test:
   script:
     - docker-compose build
     - docker-compose -f docker-compose.test.yaml up --exit-code-from web
-docker_build: 
+docker_deploy: 
   image: docker:25.0.1
-  stage: docker_build
+  stage: docker_deploy
   variables:
     DOCKER_TLS_CERTDIR: "/certs"
   before_script:
