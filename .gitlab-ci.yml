@@ -1,3 +1,8 @@
+runners:
+  kubernetes_runner:
+    tags:
+      - kuber_gitlab-runner
+
 stages:
   - test
   - docker_deploy
