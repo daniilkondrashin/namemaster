@@ -15,3 +15,8 @@ resource "kubernetes_namespace" "cert-manager" {
     name = var.cert-manager_namespace
   }
 }
+resource "kubernetes_namespace" "gitlab-runner" {
+  metadata {
+    name = var.gitlab-runner_namespace
+  }
+}

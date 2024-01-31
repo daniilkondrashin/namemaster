@@ -15,3 +15,7 @@ variable "cert-manager_namespace" {
   type    = string
   default = "cert-manager"
 }
+variable "gitlab-runner_namespace" {
+  type    = string
+  default = "gitlab-runner"
+}

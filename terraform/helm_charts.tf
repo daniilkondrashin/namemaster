@@ -52,4 +52,17 @@ resource "helm_release" "cert_manager" {
 
   # Добавьте другие параметры Helm, если необходимо
 }
+resource "helm_release" "gitlab-runner" {
+  name      = "gitlab-runner"
+  repository = "https://charts.gitlab.io"
+  chart     = "gitlab-runner"
+  namespace = var.gitlab-runner_namespace
+  
+  values = [
+    file("${path.module}/helm_values/gitlab-runner_values.yaml")
+  ]
+
+  # Добавьте другие параметры Helm, если необходимо
+}
+
 
