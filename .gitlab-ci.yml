@@ -13,14 +13,6 @@ test:
     - kuber_gitlab-runner
   image: 
     name: docker/compose:1.29.2
-    entrypoint: [""]
-  services:
-    - name: docker:dind
-      alias: dind
-  variables:
-    DOCKER_TLS_CERTDIR: ""
-    DOCKER_HOST: tcp://dind:2375
-    DOCKER_DRIVER: overlay2
   before_script:
     - docker-compose --version
   script:
