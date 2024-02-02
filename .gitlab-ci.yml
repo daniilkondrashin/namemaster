@@ -1,4 +1,4 @@
-image: docker:20.10.16
+image: docker:latest
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -14,7 +14,6 @@ stages:
   - test
   - docker_deploy
 test:
-  image: docker:20.10.16-dind
   stage: test
   tags:
     - kuber_gitlab-runner
