@@ -1,11 +1,6 @@
-image: docker:latest
-
 variables:
   IMAGE_NAME: daniil3680/namemaster
   IMAGE_TAG: 0.0.2-R1
-
-services:
-  - docker:20.10.16-dind
 
 stages:
   - test
@@ -13,6 +8,8 @@ stages:
 test:
   image:
     name: docker/compose:latest
+  services:
+    - docker:dind
   stage: test
   tags:
     - kuber_gitlab-runner
