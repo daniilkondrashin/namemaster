@@ -1,15 +1,18 @@
-stages:
-  - test
-  - docker_deploy
+image: docker:20.10.16
+
 variables:
-  DOCKER_DRIVER: overlay
-  DOCKER_HOST: tcp://127.0.0.1:2375/
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
   IMAGE_NAME: daniil3680/namemaster
   IMAGE_TAG: 0.0.2-R1
+
 services:
-  - name: docker:dind
-    command: ["--tls=false"]
+  - docker:20.10.16-dind
+
+stages:
+  - test
+  - docker_deploy
 test:
   image: creatiwww/docker-compose:latest
   stage: test
@@ -21,7 +24,7 @@ test:
     - docker-compose build
     - docker-compose -f docker-compose.test.yaml up --exit-code-from web
 docker_deploy: 
-  image: docker:25.0.1
+  image: docker:20.10.16
   stage: docker_deploy
   tags:
     - kuber_gitlab-runner
