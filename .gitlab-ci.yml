@@ -10,6 +10,8 @@ services:
 test:
   image: creatiwww/docker-compose:latest
   stage: test
+  tags:
+    - kuber_gitlab-runner
   before_script:
     - apk add --no-cache docker-compose
   script:
