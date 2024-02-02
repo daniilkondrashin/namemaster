@@ -1,21 +1,21 @@
+image: docker
+
 variables:
   IMAGE_NAME: daniil3680/namemaster
   IMAGE_TAG: 0.0.2-R1
+  DOCKER_DRIVER: overlay2
 
+services:
+  - docker:dind
 stages:
   - test
   - docker_deploy
 test:
-  image:
-    name: docker/compose:latest
-  services:
-    - docker:dind
   stage: test
   tags:
     - kuber_gitlab-runner
   before_script:
-      - docker version
-      - docker-compose version
+    - pip install docker-compose
   script:
     - docker-compose build
     - docker-compose -f docker-compose.test.yaml up --exit-code-from web
