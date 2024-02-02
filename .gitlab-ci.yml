@@ -1,20 +1,18 @@
-image: docker:20.10.16
-
-variables:
-  DOCKER_DRIVER: overlay2
-  DOCKER_HOST: tcp://docker:2375
-  DOCKER_TLS_CERTDIR: ""
-  IMAGE_NAME: daniil3680/namemaster
-  IMAGE_TAG: 0.0.2-R1
-
-services:
-  - docker:20.10.16-dind
-
 stages:
   - test
   - docker_deploy
 test:
   image: creatiwww/docker-compose:latest
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    IMAGE_NAME: daniil3680/namemaster
+    IMAGE_TAG: 0.0.2-R1
+
+  services:
+    - docker:20.10.16-dind
+
   stage: test
   tags:
     - kuber_gitlab-runner
