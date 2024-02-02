@@ -22,7 +22,7 @@ test:
     DOCKER_HOST: tcp://dind:2375
     DOCKER_DRIVER: overlay2
   before_script:
-    - apk install --no-cache docker-compose
+    - apt install --no-cache docker-compose
   script:
     - docker-compose build
     - docker-compose -f docker-compose.test.yaml up --exit-code-from web
