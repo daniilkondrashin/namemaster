@@ -15,7 +15,9 @@ test:
   tags:
     - kuber_gitlab-runner
   before_script:
-    - apt install docker-compose
+    - apk update
+    - apk add py-pip python3-dev libffi-dev openssl-dev gcc libc-dev make
+    - pip install docker-compose
   script:
     - docker-compose build
     - docker-compose -f docker-compose.test.yaml up --exit-code-from web
