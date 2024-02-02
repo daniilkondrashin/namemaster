@@ -14,9 +14,7 @@ test:
   tags:
     - kuber_gitlab-runner
   script:
-    - kaniko \
-      --context $CI_PROJECT_DIR \
-      --dockerfile docker-compose.test.yaml \
+    - echo "{\"auths\":{\"$IMAGE_NAME\":{\"username\":\"$REGISTRY_USER\",\"password\":\"$REGISTRY_PASS\"}}}" > /kaniko/.docker/config.json
 
 docker_deploy: 
   image: docker:25.0.1
