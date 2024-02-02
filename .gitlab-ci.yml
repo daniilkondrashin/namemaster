@@ -4,19 +4,20 @@ stages:
 variables:
   IMAGE_NAME: daniil3680/namemaster
   IMAGE_TAG: 0.0.2-R1
-services:
-  - docker:25.0.1-dind
+
 
 test:
-  image: creatiwww/docker-compose:latest
+  image:
+    name: gcr.io/kaniko-project/executor:v1.14.0-debug
+    entrypoint: [""]
   stage: test
   tags:
     - kuber_gitlab-runner
-  before_script:
-    - apk add --no-cache docker-compose
   script:
-    - docker-compose build
-    - docker-compose -f docker-compose.test.yaml up --exit-code-from web
+    - kaniko \
+      --context $CI_PROJECT_DIR \
+      --dockerfile $CI_PROJECT_DIR/docker-compose.yaml \
+
 docker_deploy: 
   image: docker:25.0.1
   stage: docker_deploy
