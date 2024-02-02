@@ -5,16 +5,19 @@ variables:
   IMAGE_NAME: daniil3680/namemaster
   IMAGE_TAG: 0.0.2-R1
 
-
+.docker-login: &docker-login
+  before_script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$IMAGE_NAME\":{\"username\":\"$REGISTRY_USER\",\"password\":\"$REGISTRY_PASS\"}}}" > /kaniko/.docker/config.json
 test:
   image:
     name: gcr.io/kaniko-project/executor:v1.14.0-debug
     entrypoint: [""]
   stage: test
+  <<: "docker-login"
   tags:
     - kuber_gitlab-runner
   script:
-    - echo "{\"auths\":{\"$IMAGE_NAME\":{\"username\":\"$REGISTRY_USER\",\"password\":\"$REGISTRY_PASS\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $IMAGE_NAME:$IMAGE_TAG
 docker_deploy: 
   image: docker:25.0.1
