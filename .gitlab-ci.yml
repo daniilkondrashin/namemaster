@@ -2,6 +2,8 @@ image: docker:latest
 variables:
   IMAGE_NAME: daniil3680/namemaster
   IMAGE_TAG: 0.0.2-R1
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: "tcp://localhost:2375"
 
 services:
   - docker:dind
@@ -12,7 +14,6 @@ test:
   stage: test
   tags:
     - kuber_gitlab-runner
-  image: docker/compose
   before_script:
     - docker-compose --version
   script:
