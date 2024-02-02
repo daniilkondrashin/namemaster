@@ -1,30 +1,30 @@
-image: docker:latest
-variables:
-  IMAGE_NAME: daniil3680/namemaster
-  IMAGE_TAG: 0.0.2-R1
-  DOCKER_DRIVER: overlay2
+runners:
+  kubernetes_runner:
+    tags:
+      - kuber_gitlab-runner
 
-services:
-  - docker:dind
 stages:
   - test
   - docker_deploy
+variables:
+  IMAGE_NAME: daniil3680/namemaster
+  IMAGE_TAG: 0.0.2-R1
+services:
+  - docker:25.0.1-dind
+
 test:
+  image: creatiwww/docker-compose:latest
   stage: test
-  tags:
-    - kuber_gitlab-runner
   before_script:
-    - docker-compose --version
+    - apk add --no-cache docker-compose
   script:
     - docker-compose build
     - docker-compose -f docker-compose.test.yaml up --exit-code-from web
 docker_deploy: 
-  image: docker:20.10.16
+  image: docker:25.0.1
   stage: docker_deploy
-  tags:
-    - kuber_gitlab-runner
-  # variables:
-  #   DOCKER_TLS_CERTDIR: "/certs"
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
   before_script:
     - docker login -u $REGISTRY_USER -p $REGISTRY_PASS
   script:
