@@ -21,7 +21,7 @@ test:
   before_script:
     - apk add --no-cache docker-compose
   script:
-    - sleep 30
+    - sleep 30 && export DOCKER_HOST=tcp://localhost:2375
     - docker-compose build
     - docker-compose -f docker-compose.test.yaml up --exit-code-from web
 docker_deploy: 
