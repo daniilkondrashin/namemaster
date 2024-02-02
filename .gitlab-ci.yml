@@ -18,6 +18,8 @@ test:
 docker_deploy: 
   image: docker:25.0.1
   stage: docker_deploy
+  tags:
+    - kuber_gitlab-runner
   variables:
     DOCKER_TLS_CERTDIR: "/certs"
   before_script:
