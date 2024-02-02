@@ -16,7 +16,7 @@ test:
   script:
     - kaniko \
       --context $CI_PROJECT_DIR \
-      --dockerfile $CI_PROJECT_DIR/docker-compose.yaml \
+      --dockerfile docker-compose.test.yaml \
 
 docker_deploy: 
   image: docker:25.0.1
