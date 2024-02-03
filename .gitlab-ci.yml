@@ -4,26 +4,20 @@ stages:
 variables:
   IMAGE_NAME: daniil3680/namemaster
   IMAGE_TAG: 0.0.2-R1
+services:
+  - docker:25.0.1-dind
 
-.docker-login: &docker-login
-  before_script:
-    - mkdir -p /kaniko/.docker
-    - echo "{\"auths\":{\"$IMAGE_NAME\":{\"username\":\"$REGISTRY_USER\",\"password\":\"$REGISTRY_PASS\"}}}" > /kaniko/.docker/config.json
 test:
-  image:
-    name: gcr.io/kaniko-project/executor:v1.14.0-debug
-    entrypoint: [""]
+  image: creatiwww/docker-compose:latest
   stage: test
-  <<: "docker-login"
-  tags:
-    - kuber_gitlab-runner
+  before_script:
+    - apk add --no-cache docker-compose
   script:
-    - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $IMAGE_NAME:$IMAGE_TAG
+    - docker-compose build
+    - docker-compose -f docker-compose.test.yaml up --exit-code-from web
 docker_deploy: 
   image: docker:25.0.1
   stage: docker_deploy
-  tags:
-    - kuber_gitlab-runner
   variables:
     DOCKER_TLS_CERTDIR: "/certs"
   before_script:
@@ -31,6 +25,7 @@ docker_deploy:
   script:
     - docker build -t $IMAGE_NAME:$IMAGE_TAG .
     - docker push $IMAGE_NAME:$IMAGE_TAG 
+
 
 
 
