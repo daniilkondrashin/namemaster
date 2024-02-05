@@ -40,6 +40,7 @@ k8s_deploy:
   only:
     - main
   script:
+    - kubectl get svc -n nginx-ingress
     - kubectl config get-contexts
 
 
