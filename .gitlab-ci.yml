@@ -31,6 +31,9 @@ docker_deploy:
     - docker build -t $IMAGE_NAME:$IMAGE_TAG .
     - docker push $IMAGE_NAME:$IMAGE_TAG 
 k8s_deploy:
+  image:
+    name: bitnami/kubectl:latest
+    entrypoint: ['']
   stage: k8s_deploy
   tags:
     - kuber_gitlab-runner
@@ -38,6 +41,7 @@ k8s_deploy:
     - main
   script:
     -  kubectl get svc -n nginx-ingress
+    - kubectl config get-contexts
 
 
 
