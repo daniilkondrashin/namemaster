@@ -41,7 +41,7 @@ k8s_deploy:
     - main
   script:
     - ls -la
-    - kubectl apply -f kubernetes/ 
+    - kubectl get pods -n namemaster
 
 
 
