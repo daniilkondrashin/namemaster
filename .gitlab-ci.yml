@@ -34,7 +34,7 @@ docker_deploy:
     - docker push $IMAGE_NAME:$IMAGE_TAG 
 k8s_deploy:
   image:
-    name: bitnami/kubectl:latest
+    name: alpine/helm:latest
     entrypoint: ['']
   stage: k8s_deploy
   tags:
@@ -47,7 +47,8 @@ k8s_deploy:
     - kubectl config set-credentials ci --token=$K8S_DEV_CI_TOKEN
     - kubectl config set-context ci --cluster=k8s --user=ci
     - kubectl config use-context ci
-    - kubectl apply -f kubernetes/namemaster-deploy.yaml
+    - helm upgrade namemaster .helm/namemaster 
+        --namespace namemaster
 
 
 
