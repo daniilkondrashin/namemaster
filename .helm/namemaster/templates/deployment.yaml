@@ -42,7 +42,7 @@ spec:
               protocol: TCP
           envFrom:
             - secretRef:
-                name: namemaster-secret
+                name: namemaster
           livenessProbe:
             httpGet:
               path: /
