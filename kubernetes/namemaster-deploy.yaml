@@ -27,7 +27,7 @@ spec:
               name: namemaster
           envFrom:
             - secretRef:
-                name: namemaster-secret
+                name: namemaster
           resources:
             limits:
               cpu: 500m
