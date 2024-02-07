@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: namemaster
-  namespace: gitlab-runner
+  namespace: namemaster
   labels:
     app.kubernetes.io/name: namemaster
     app.kubernetes.io/component: web
@@ -38,7 +38,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: namemaster
-  namespace: gitlab-runner
+  namespace: namemaster
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
