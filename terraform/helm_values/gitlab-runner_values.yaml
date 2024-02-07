@@ -168,7 +168,7 @@ rbac:
 
   ## Run the gitlab-bastion container with the ability to deploy/manage containers of jobs
   ## cluster-wide or only within namespace
-  clusterWideAccess: false
+  clusterWideAccess: true
 
   ## Use the following Kubernetes Service Account name if RBAC is disabled in this Helm chart (see rbac.create)
   ##
@@ -350,7 +350,7 @@ runners:
   ##
   ## ref: https://docs.gitlab.com/ee/ci/runners/new_creation_workflow.html
   ##
-  # tags: ""
+  tags: "kuber_gitlab-runner"
 
   ## Specify the name for the runner.
   ##
