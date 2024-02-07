@@ -47,7 +47,7 @@ k8s_deploy:
     - kubectl config set-credentials ci --token=$K8S_DEV_CI_TOKEN
     - kubectl config set-context ci --cluster=k8s --user=ci
     - kubectl config use-context ci
-    - helm upgrade --install namemaster .helm/namemaster 
+    - helm install namemaster .helm/namemaster 
         --set image=IMAGE_NAME
         --set imageTag=IMAGE_TAG
         --namespace namemaster
