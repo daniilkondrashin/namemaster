@@ -48,8 +48,8 @@ k8s_deploy:
     - kubectl config set-context ci --cluster=k8s --user=ci
     - kubectl config use-context ci
     - helm upgrade --install namemaster .helm/namemaster 
-        --set image.repository=IMAGE_NAME
-        --set image.tag=IMAGE_TAG
+        --set image.repository=$IMAGE_NAME
+        --set image.tag=$IMAGE_TAG
         --namespace namemaster
 
 
