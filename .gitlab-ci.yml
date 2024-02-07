@@ -49,7 +49,7 @@ k8s_deploy:
     - kubectl config use-context ci
     - helm install namemaster .helm/namemaster 
         --set image=IMAGE_NAME
-        --set imageTag=IMAGE_TAG
+        --set tag=IMAGE_TAG
         --namespace namemaster
 
 
