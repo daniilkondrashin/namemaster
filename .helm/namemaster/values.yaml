@@ -5,10 +5,10 @@
 replicaCount: 1
 
 image:
-  repository: daniil3680/namemaster
+  # repository: daniil3680/namemaster
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: 0.0.2-R1
+  # tag: 0.0.2-R1
 
 imagePullSecrets: []
 nameOverride: ""
