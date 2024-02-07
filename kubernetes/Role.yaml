@@ -1,0 +1,9 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: namemaster
+  name: namemaster-role
+rules:
+- apiGroups: ["", "extensions", "autoscaling", "apps", "batch", "events", "networking.k8s.io", "certmanager.k8s.io", "cert-manager.io", "monitoring.coreos.com"]
+  resources: ["*"]
+  verbs: ["*"]
