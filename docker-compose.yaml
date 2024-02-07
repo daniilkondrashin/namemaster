@@ -11,11 +11,11 @@ services:
     depends_on:
       - db
     environment:
-        username: postgres
-        password: password
-        host: db
-        port: 5432
-        database: mydatabase
+        postgresql-username: postgres
+        postgresql-password: password
+        postgresql-host: db
+        postgresql-port: 5432
+        postgresql-database: mydatabase
 
   db:
     image: postgres:12
