@@ -34,7 +34,7 @@ docker_deploy:
     - docker push $IMAGE_NAME:$IMAGE_TAG 
 k8s_deploy:
   image:
-    name: alpine/helm:latest
+    name: centosadmin/kubernetes-helm:latest
     entrypoint: ['']
   stage: k8s_deploy
   tags:
