@@ -4,7 +4,7 @@ stages:
   - k8s_deploy
 variables:
   IMAGE_NAME: daniil3680/namemaster
-  IMAGE_TAG: 0.0.2-R2
+  IMAGE_TAG: '0.0.3'
   K8S_DEV_API_URL: https://kubernetes.default
   NAMESPACE: namemaster
 services:
@@ -50,6 +50,8 @@ k8s_deploy:
     - helm upgrade --install namemaster .helm/namemaster 
         --set image.repository=$IMAGE_NAME
         --set image.tag=$IMAGE_TAG
+        --atomic
+        --timeout 120s
         --namespace namemaster
 
 
