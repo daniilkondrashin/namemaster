@@ -5,7 +5,7 @@ kind: Role
 metadata:
   name: {{ template "namemaster.fullname" . }}-privileged
 rules:
-- apiGroups: ["", "extensions", "autoscaling", "apps", "batch", "events", "networking.k8s.io", "certmanager.k8s.io", "cert-manager.io", "monitoring.coreos.com"]
+- apiGroups: ["", "extensions", "autoscaling", "apps", "batch", "events", "networking.k8s.io", "certmanager.k8s.io", "cert-manager.io", "monitoring.coreos.com", "rbac.authorization.k8s.io"]
   resources: ["*"]
   verbs: ["*"]
 ---
