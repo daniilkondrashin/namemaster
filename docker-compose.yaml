@@ -16,6 +16,7 @@ services:
         postgresql-host: db
         postgresql-port: 5432
         postgresql-database: mydatabase
+        namemaster-secretkey: 9b908738adb74b789012511dce6e0bfe
 
   db:
     image: postgres:12
