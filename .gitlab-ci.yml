@@ -4,7 +4,7 @@ stages:
   - k8s_deploy
 variables:
   IMAGE_NAME: daniil3680/namemaster
-  IMAGE_TAG: '0.0.3'
+  IMAGE_TAG: '0.1'
   K8S_DEV_API_URL: https://kubernetes.default
   NAMESPACE: namemaster
 services:
@@ -52,7 +52,7 @@ k8s_deploy:
         --set image.tag=$IMAGE_TAG
         --atomic
         --timeout 120s
-        --namespace default
+        --namespace namemaster
 
 
 
