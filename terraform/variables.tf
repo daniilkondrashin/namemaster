@@ -19,3 +19,7 @@ variable "gitlab-runner_namespace" {
   type    = string
   default = "gitlab-runner"
 }
+variable "monitoring_namespace" {
+  type    = string
+  default = "monitoring"
+}

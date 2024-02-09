@@ -20,3 +20,8 @@ resource "kubernetes_namespace" "gitlab-runner" {
     name = var.gitlab-runner_namespace
   }
 }
+resource "kubernetes_namespace" "monitoring" {
+  metadata {
+    name = var.monitoring_namespace
+  }
+}

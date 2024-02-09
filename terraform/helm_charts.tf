@@ -9,6 +9,7 @@ resource "helm_release" "nginx_ingress" {
     value = "true"
   }
 }
+
 resource "helm_release" "metrics_server" {
   name      = "metrics-server"
   repository = "https://kubernetes-sigs.github.io/metrics-server/"
@@ -23,35 +24,54 @@ resource "helm_release" "metrics_server" {
     name  = "args"
     value = ["--kubelet-insecure-tls"]
   }
-
-  # Добавьте другие параметры Helm, если необходимо
 }
+
 resource "helm_release" "postgresql" {
   name      = "postgresql"
   chart     = "bitnami/postgresql"
   namespace  = var.namemaster_namespace
-
-  # Добавьте другие параметры Helm, если необходимо
 }
+
 resource "helm_release" "cert_manager" {
   name      = "cert-manager"
-  chart     = "jetstack/cert-manager"
-
-
+  repository = "https://charts.jetstack.io"
+  chart     = "cert-manager"
   namespace = var.cert-manager_namespace
-  set {
-    name  = "installCRDs"
-    value = "true"
+}
+
+resource "null_resource" "certissuer" {
+  depends_on = [
+    helm_release.cert_manager // запустить ресурс после инициализации cert-manager
+  ]
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOD
+kubectl delete ClusterIssuer certissuer
+EOD
   }
 
-
-  # set {
-  #   name  = "global.imageRegistry"
-  #   value = "docker.io"
-  # }
-
-  # Добавьте другие параметры Helm, если необходимо
+  provisioner "local-exec" {
+    command = <<EOT
+cat <<EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: certissuer
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: "dankon368024@gmail.com"
+    privateKeySecretRef:
+      name: cert-manager // ссылка на Secret куда сохранить сертификат
+    solvers:
+        - http01:
+            ingress:
+              class: nginx
+EOF
+EOT
+  }
 }
+
 resource "helm_release" "gitlab-runner" {
   name      = "gitlab-runner"
   repository = "https://charts.gitlab.io"
@@ -61,8 +81,18 @@ resource "helm_release" "gitlab-runner" {
   values = [
     file("${path.module}/helm_values/gitlab-runner_values.yaml")
   ]
-
-  # Добавьте другие параметры Helm, если необходимо
 }
+
+resource "helm_release" "prometheus" {
+  name      = "prometheus"
+  repository = "https://prometheus-community.github.io/helm-charts"
+  chart     = "kube-prometheus-stack"
+  namespace = var.monitoring_namespace
+  
+  values = [
+    file("${path.module}/helm_values/prometheus-values.yaml")
+  ]
+}
+
 
 
