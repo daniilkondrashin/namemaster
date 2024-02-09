@@ -42,9 +42,9 @@ spec:
                 name: namemaster
           livenessProbe:
             httpGet:
-              path: /main
+              path: /
               port: 5000
           readinessProbe:
             httpGet:
-              path: /main
+              path: /
               port: 5000
