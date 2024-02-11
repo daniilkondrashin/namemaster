@@ -10,11 +10,13 @@ from form import Name
 
 app = Flask(__name__)
 
-
+# PostgreSQL database connection parameters
 app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{os.environ['postgresql-username']}:{os.environ['postgresql-password']}@{os.environ['postgresql-host']}:{os.environ['postgresql-port']}/{os.environ['postgresql-database']}"
+# The secret key for FlaskForm operation
 app.config['SECRET_KEY'] = {os.environ['namemaster-secretkey']}  
 db = SQLAlchemy(app)
 
+# Passing the text from input to the class="form" field
 Messages = namedtuple('Messages', 'text')
 messagesSession = []
 
@@ -31,6 +33,7 @@ with app.app_context():
 
 @app.route("/", methods=['POST', 'GET'])
 def main():
+    # Passing the text to FlaskForm
     form = Name()
     if form.validate_on_submit():
         text = form.name.data
@@ -38,9 +41,12 @@ def main():
 
         db.session.add(Message(text))
         db.session.commit()
+        # Restarts the site to clear the input
         return redirect(url_for('main'))
+    # We write the result to the database and output it to class="form"
     return render_template('main.html', messagesSession=messagesSession, messages=Message.query.order_by(desc(Message.id)).limit(5).all(), form=form)
 
+# Deletes all data from the "Message"
 @app.route("/delete_data", methods=['POST'])
 def delete_data():
     if request.method == 'POST':

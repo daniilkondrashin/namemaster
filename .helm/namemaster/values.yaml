@@ -14,6 +14,8 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+# Creates a ServiceAccount for the ability to install and modify resources in namespace: namemaster using gitlab runner.
+# The token is written to the secret "namemaster-serviceaccount-secret".
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
@@ -64,17 +66,20 @@ ingress:
        - namemaster.online
 
 # You need to enter data from your postgresql
-# This data will be entered into the secret for namemaster to work.
+# This data will be entered into the secret for working with the namemaster database
+
 postgresql:
   username: postgres
-  password: tSa1ArryOb
+  password: db_password
   host: postgresql
   port: '5432'
   database: postgres
 
+# secret key for namemaster operation
 namemaster:
   secretkey: 9b908738adb74b789012511dce6e0bfe
 
+# Pod limits
 resources: 
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
@@ -87,6 +92,7 @@ resources:
     cpu: 100m
     memory: 128Mi
 
+# Enable pod autoscaling using HorizontalPodAutoscaler
 autoscaling:
   enabled: true
   minReplicas: 1
