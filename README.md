@@ -28,12 +28,10 @@ The following table lists the configurable parameters of the nextcloud chart and
 | `image.repository`           | namemaster Image name                            | `daniil3680/namemaster`   |
 | `image.pullPolicy`           | Image pull policy                                | `IfNotPresent`            |
 | `image.tag`                  | namemaster Image tag                             | `latest`                  |
-| `serviceAccount.create`      | Enable Role and role binding for priveledged PSP | `false`                   |
-| `serviceAccount.annotations` | Serviceaccount annotations                       | `{}`                      |
-| `serviceAccount.name`        | The name of the service account that the deployment will use (requires rbac) | `nil`         |
 | `rbac.create`                | Create rbac Role and RoleBinding                 | `false`                   |
 | `rbac.annotations`           | rbac Role and RoleBinding annotations            | `{}`                      |
-| `rbac.namesecret`            | Secret name for serviceaccount              | `namemaster-serviceaccount-secret`|
+| `rbac.namesecret`            | Secret name for serviceaccount                   | `namemaster-serviceaccount-secret`|
+| `rbac.name`                  | Serviceaccount name                              | `namemaster-serviceaccount`|
 | `podAnnotations`             | Annotations to be added at 'pod' level           | `not set`                 |
 | `podLabels`                  | Labels to be added at 'pod' level                | `not set`                 |
 | `podSecurityContext`         | Optional security context for the namemaster pod (applies to all containers in the pod)| `not set`|
@@ -43,7 +41,7 @@ The following table lists the configurable parameters of the nextcloud chart and
 | `ingress.enabled`            | Enable use of ingress controllers                 | `false`                  |
 | `ingress.className`          | Name of the ingress class to use                  | `nil`                    |
 | `ingress.annotations`        | An array of service annotations                   | `nil`                    |
-| `ingress.host`               | namemaster host                                   | `nil`                    |
+| `ingress.host`               | namemaster host                                   | `{}`                    |
 | `ingress.path`               | The `Path` to use in Ingress' `paths`             | `/`                      |
 | `ingress.pathType`           | The `PathType` to use in Ingress' `paths`         | `Prefix`                 |
 | `ingress.tls`                | Ingress TLS configuration                         | `[]`                     |
@@ -56,6 +54,7 @@ The following table lists the configurable parameters of the nextcloud chart and
 | `resources`                  | CPU/Memory resource requests/limits               | `{}`                     |
 | `autoscaling.enabled`        | Boolean to create a HorizontalPodAutoscaler       | `false`                  |
 | `autoscaling.minReplicas`    | Min. pods for the namemaster HorizontalPodAutoscaler | `1`                   |
+| `autoscaling.maxReplicas`    | Max. pods for the namemaster HorizontalPodAutoscaler | `10`                  |
 | `autoscaling.targetCPUUtilizationPercentage`| CPU threshold percent for the HorizontalPodAutoscale | `80`   |
 | `autoscaling.targetMemoryUtilizationPercentage`| Memory threshold percent for the HorizontalPodAutoscale | `80`   |
 
