@@ -37,51 +37,57 @@ resource "helm_release" "cert_manager" {
   repository = "https://charts.jetstack.io"
   chart     = "cert-manager"
   namespace = var.cert-manager_namespace
-}
 
-resource "null_resource" "certissuer" {
-  depends_on = [
-    helm_release.cert_manager // запустить ресурс после инициализации cert-manager
-  ]
-  provisioner "local-exec" {
-    when    = destroy
-    command = <<-EOD
-kubectl delete ClusterIssuer certissuer
-EOD
+  set {
+    name  = "installCRDs"
+    value = "true"
   }
 
-  provisioner "local-exec" {
-    command = <<EOT
-cat <<EOF | kubectl apply -f -
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: certissuer
-spec:
-  acme:
-    server: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: "dankon368024@gmail.com"
-    privateKeySecretRef:
-      name: cert-manager // ссылка на Secret куда сохранить сертификат
-    solvers:
-        - http01:
-            ingress:
-              class: nginx
-EOF
-EOT
-  }
 }
 
-resource "helm_release" "gitlab-runner" {
-  name      = "gitlab-runner"
-  repository = "https://charts.gitlab.io"
-  chart     = "gitlab-runner"
-  namespace = var.gitlab-runner_namespace
+# resource "null_resource" "certissuer" {
+#   depends_on = [
+#     helm_release.cert_manager // запустить ресурс после инициализации cert-manager
+#   ]
+#   provisioner "local-exec" {
+#     when    = destroy
+#     command = <<-EOD
+# kubectl delete ClusterIssuer certissuer
+# EOD
+#   }
+
+#   provisioner "local-exec" {
+#     command = <<EOT
+# cat <<EOF | kubectl apply -f -
+# apiVersion: cert-manager.io/v1
+# kind: ClusterIssuer
+# metadata:
+#   name: certissuer
+# spec:
+#   acme:
+#     server: https://acme-v02.api.letsencrypt.org/directory
+#     email: "dankon368024@gmail.com"
+#     privateKeySecretRef:
+#       name: cert-manager // ссылка на Secret куда сохранить сертификат
+#     solvers:
+#         - http01:
+#             ingress:
+#               class: nginx
+# EOF
+# EOT
+#   }
+# }
+
+# resource "helm_release" "gitlab-runner" {
+#   name      = "gitlab-runner"
+#   repository = "https://charts.gitlab.io"
+#   chart     = "gitlab-runner"
+#   namespace = var.gitlab-runner_namespace
   
-  values = [
-    file("${path.module}/helm_values/gitlab-runner_values.yaml")
-  ]
-}
+#   values = [
+#     file("${path.module}/helm_values/gitlab-runner_values.yaml")
+#   ]
+# }
 
 resource "helm_release" "prometheus" {
   name      = "prometheus"
