@@ -5,27 +5,17 @@
 replicaCount: 1
 
 image:
-  repository: ""
+  repository: daniil3680/namemaster
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  tag: latest
 
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
 
 # Creates a ServiceAccount for the ability to install and modify resources in namespace: namemaster using gitlab runner.
 # The token is written to the secret "namemaster-serviceaccount-secret".
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
+
 rbac:
-  enabled: true
+  create: false
   serviceaccount:
     name: namemaster-serviceaccount
     annotations: {}
@@ -50,20 +40,20 @@ service:
   port: 80
 
 ingress:
-  enabled: true
+  enabled: false
   className: ""
-  annotations: 
-    kubernetes.io/ingress.class: nginx
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-  hosts:
-    - host: namemaster.online
-      paths:
-        - path: /
-          pathType: Prefix
-  tls: 
-   - secretName: namemaster-tls
-     hosts:
-       - namemaster.online
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts: {}
+    # - host: example.online
+    #   paths:
+    #     - path: /
+    #       pathType: Prefix
+  tls: []
+  #  - secretName: namemaster-tls
+  #    hosts:
+  #      - example.online
 
 # You need to enter data from your postgresql
 # This data will be entered into the secret for working with the namemaster database
@@ -77,7 +67,7 @@ postgresql:
 
 # secret key for namemaster operation
 namemaster:
-  secretkey: 9b908738adb74b789012511dce6e0bfe
+  secretkey: 9b908738adb74b789012511dce6e0bfe # example
 
 # Pod limits
 resources: 
@@ -94,7 +84,7 @@ resources:
 
 # Enable pod autoscaling using HorizontalPodAutoscaler
 autoscaling:
-  enabled: true
+  enabled: false
   minReplicas: 1
   maxReplicas: 10
   targetCPUUtilizationPercentage: 80
