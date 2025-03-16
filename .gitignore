@@ -1,10 +1,36 @@
-venv/
+# Terraform
+**/.terraform/*
+.terraform
+.terraform.lock.hcl
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+terraform.tfstate.backup
+
+# Crash log files
+crash.log
+*.log
+
+# Ignore automatically generated .tfvars files
+*.auto.tfvars
+*.tfvars
+!example.tfvars
+
+# Ignore override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Dev environments
+.vscode/
 .idea/
 __pycache__/
-.vscode/
+venv/
+*.pyc
 tests/.pytest_cache
-# .env
-terraform/.terraform
-terraform/.terraform.lock.hcl
-terraform/terraform.tfstate.backup
-terraform/terraform.tfstate
+
+# System files
+.DS_Store
+.env
