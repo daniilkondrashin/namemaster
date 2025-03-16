@@ -2,8 +2,7 @@ version: '3'
 
 services:
   web:
-    image: python:3.8
-    command: bash -c "pip install -r app/requirements.txt && python app/main.py"
+    image: daniil3680/namemaster 
     volumes:
       - ./app:/app
     ports:
