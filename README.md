@@ -38,18 +38,19 @@ The following table lists the configurable parameters of the nextcloud chart and
 | `securityContext`            | Optional security context for the NextCloud container| `not set`             |
 | `service.type`               | Kubernetes Service type                           | `ClusterIP`              |
 | `service.port`               | Kubernetes Service port                           | `80`                     |
-| `ingress.enabled`            | Enable use of ingress controllers                 | `false`                  |
-| `ingress.className`          | Name of the ingress class to use                  | `nil`                    |
-| `ingress.annotations`        | An array of service annotations                   | `nil`                    |
-| `ingress.host`               | namemaster host                                   | `{}`                    |
-| `ingress.path`               | The `Path` to use in Ingress' `paths`             | `/`                      |
-| `ingress.pathType`           | The `PathType` to use in Ingress' `paths`         | `Prefix`                 |
-| `ingress.tls`                | Ingress TLS configuration                         | `[]`                     |
-| `postgresql.username`        | username postgres                                 | `postgres`               |
-| `postgresql.password`        | password postgres                                 | `db_password`            |
+| `gateway.enabled`            | Create Gateway API Gateway and HTTPRoute          | `false`                  |
+| `gateway.className`          | GatewayClass name managed by NGINX Gateway Fabric | `nginx`                  |
+| `gateway.hostname`           | Public hostname for Gateway and HTTPRoute         | `example.online`         |
+| `gateway.annotations`        | Gateway annotations, including cert-manager issuer | `cert-manager.io/cluster-issuer: letsencrypt-prod` |
+| `gateway.tls.enabled`        | Enable HTTPS listener on the Gateway              | `true`                   |
+| `gateway.tls.secretName`     | TLS secret created by cert-manager                | `namemaster-tls`         |
+| `gateway.route.paths`        | HTTPRoute path matches                            | `/`                      |
+| `postgresql.username`        | username postgres                                 | `namemaster`             |
+| `postgresql.existingSecret.name` | Existing Secret with database password        | `postgresql`             |
+| `postgresql.existingSecret.passwordKey` | Password key in existing Secret        | `password`               |
 | `postgresql.host`            | host postgres                                     | `postgresql`             |
 | `postgresql.port`            | port postgres                                     | `5432`                   |
-| `postgresql.database`        | database postgres                                 | `postgres`               |
+| `postgresql.database`        | database postgres                                 | `namemaster`             |
 | `namemaster.secretkey`       | secret key for namemaster operation               | `''`                     |
 | `resources`                  | CPU/Memory resource requests/limits               | `{}`                     |
 | `autoscaling.enabled`        | Boolean to create a HorizontalPodAutoscaler       | `false`                  |
@@ -66,3 +67,32 @@ Generate a token and paste it into namemaster.secretkey
 helm install postgresql bitnami/postgresql --namespace namemaster
 ```
 Enter the postgresql password in postgresql.password
+
+## Terraform remote state
+
+Bootstrap the S3 bucket first:
+
+```sh
+cd terraform/backend
+terraform init
+terraform apply
+```
+
+Then copy the generated bucket name into the backend configs:
+
+```sh
+terraform output -raw state_bucket_name
+cp ../k8s/backend.hcl.example ../k8s/backend.hcl
+cp ../helm/backend.hcl.example ../helm/backend.hcl
+```
+
+Replace the placeholder bucket value in both `backend.hcl` files, then initialize the stacks:
+
+```sh
+cd ../k8s
+terraform init -backend-config=backend.hcl -migrate-state
+
+cd ../helm
+terraform init -backend-config=backend.hcl -migrate-state
+terraform apply -var="terraform_state_bucket=<state-bucket-name>"
+```

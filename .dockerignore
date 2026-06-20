@@ -1,5 +1,8 @@
 terraform/
+.helm/
+backend.hcl
 *.tf
+*.tfvars
 *.tfstate
 *.tfstate.*
 .terraform/
@@ -10,11 +13,17 @@ helm/
 charts/
 *.tgz
 __pycache__/
+app/tests/
 *.pyc
 *.pyo
 *.pyd
 .DS_Store
 *.log
+.env
+*.env
+*.pem
+*.key
+*secret*
 .git
 .dockerignore
 Dockerfile

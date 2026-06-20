@@ -1,11 +1,47 @@
+terraform {
+  backend "s3" {
+    key          = "helm/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true
+  }
+
+  required_version = ">= 1.5.7"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 5.95.0, < 6.0.0"
+    }
+    helm = {
+      source  = "hashicorp/helm"
+      version = ">= 2.17.0, < 3.0.0"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = ">= 2.36.0, < 3.0.0"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = ">= 2.5.0, < 3.0.0"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = ">= 3.2.0, < 4.0.0"
+    }
+  }
+}
+
 provider "aws" {
   region = var.region
 }
 
 data "terraform_remote_state" "eks" {
-  backend = "local"
+  backend = "s3"
   config = {
-    path = "../k8s/terraform.tfstate"
+    bucket = var.terraform_state_bucket
+    key    = var.k8s_state_key
+    region = var.terraform_state_region
   }
 }
 

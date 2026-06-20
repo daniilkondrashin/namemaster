@@ -1,8 +1,8 @@
 # Creating namespace with the Kubernetes provider is better than auto-creation in the helm_release.
 # You can reuse the namespace and customize it with quotas and labels.
-resource "kubernetes_namespace" "nginx-ingress" {
+resource "kubernetes_namespace" "nginx_gateway" {
   metadata {
-    name = var.nginx-ingress_namespace
+    name = var.nginx_gateway_namespace
   }
 }
 resource "kubernetes_namespace" "namemaster" {

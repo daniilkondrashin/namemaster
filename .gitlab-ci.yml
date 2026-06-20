@@ -51,8 +51,7 @@ k8s_deploy:
         --set image.repository=$IMAGE_NAME
         --set image.tag=$IMAGE_TAG
         --atomic
-        --timeout 120s
+        --timeout 300s
         --namespace namemaster
-
 
 

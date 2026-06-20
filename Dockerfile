@@ -1,7 +1,22 @@
 FROM python:3.10.12-slim
-COPY app/requirements.txt /app/requirements.txt
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
 WORKDIR /app
-RUN pip install --no-cache-dir -r requirements.txt 
+
+COPY app/requirements.txt /app/requirements.txt
+RUN pip install --upgrade pip \
+    && pip install -r requirements.txt
+
 COPY app /app
+
+RUN adduser --disabled-password --gecos "" appuser \
+    && chown -R appuser:appuser /app
+USER appuser
+
 EXPOSE 5000
-CMD ["python3", "main.py"]
+
+ENTRYPOINT ["gunicorn"]
+CMD ["--bind", "0.0.0.0:5000", "main:app"]

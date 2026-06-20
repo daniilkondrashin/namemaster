@@ -1,3 +1,6 @@
+{{- $secretName := include "namemaster.fullname" . -}}
+{{- $postgresPasswordSecretName := default $secretName .Values.postgresql.existingSecret.name -}}
+{{- $postgresPasswordSecretKey := default "postgresql-password" .Values.postgresql.existingSecret.passwordKey -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,7 +22,7 @@ spec:
       {{- end }}
       labels:
         {{- include "namemaster.labels" . | nindent 8 }}
-	{{- with .Values.podLabels }}
+        {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
@@ -37,9 +40,37 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
-          envFrom:
-            - secretRef:
-                name: namemaster
+          env:
+            - name: postgresql-username
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: postgresql-username
+            - name: postgresql-password
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $postgresPasswordSecretName }}
+                  key: {{ $postgresPasswordSecretKey }}
+            - name: postgresql-host
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: postgresql-host
+            - name: postgresql-port
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: postgresql-port
+            - name: postgresql-database
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: postgresql-database
+            - name: namemaster-secretkey
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: namemaster-secretkey
           livenessProbe:
             httpGet:
               path: /
