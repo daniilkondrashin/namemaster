@@ -1,0 +1,14 @@
+# Keep this Certificate in the same namespace as the Gateway that terminates TLS.
+# The resulting Secret is referenced by Gateway.spec.listeners[].tls.certificateRefs.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: monitoring-opsbox-org
+  namespace: nginx-gateway
+spec:
+  secretName: monitoring-opsbox-org-tls
+  dnsNames:
+    - monitoring.opsbox.org
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod

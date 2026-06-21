@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kubernetes Monitor</title>
+    <link rel="stylesheet" href="/static/style.css">
+  </head>
+  <body>
+    <main>
+      <h1>Kubernetes Monitor</h1>
+      <p>Last update: <span id="last-update">waiting...</span></p>
+      <p id="errors" class="errors" hidden></p>
+
+      <section>
+        <h2>Cluster</h2>
+        <dl class="summary">
+          <div><dt>Nodes</dt><dd id="node-count">0</dd></div>
+          <div><dt>Ready nodes</dt><dd id="ready-node-count">0</dd></div>
+          <div><dt>Running pods</dt><dd id="running-pod-count">0</dd></div>
+          <div><dt>Pending pods</dt><dd id="pending-pod-count">0</dd></div>
+          <div><dt>Failed pods</dt><dd id="failed-pod-count">0</dd></div>
+          <div><dt>Cluster CPU</dt><dd id="cluster-cpu">0</dd></div>
+          <div><dt>Cluster memory</dt><dd id="cluster-memory">0</dd></div>
+          <div><dt>namemaster CPU</dt><dd id="namemaster-cpu">0</dd></div>
+          <div><dt>namemaster memory</dt><dd id="namemaster-memory">0</dd></div>
+        </dl>
+      </section>
+
+      <section>
+        <h2>namemaster</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Pod name</th>
+              <th>Namespace</th>
+              <th>Node</th>
+              <th>Status</th>
+              <th>CPU</th>
+              <th>Memory</th>
+              <th>Restarts</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody id="namemaster-pods"></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Nodes</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Node</th>
+              <th>Status</th>
+              <th>CPU used</th>
+              <th>CPU allocatable</th>
+              <th>CPU %</th>
+              <th>Memory used</th>
+              <th>Memory allocatable</th>
+              <th>Memory %</th>
+              <th>Pods</th>
+              <th>Instance type</th>
+              <th>Zone</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody id="nodes"></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>History</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Nodes</th>
+              <th>Ready</th>
+              <th>Cluster CPU</th>
+              <th>Cluster memory</th>
+              <th>namemaster CPU</th>
+              <th>namemaster memory</th>
+              <th>Pending pods</th>
+            </tr>
+          </thead>
+          <tbody id="history"></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Recent events</h2>
+        <ul id="events"></ul>
+      </section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

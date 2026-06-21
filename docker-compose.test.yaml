@@ -1,22 +1,21 @@
-version: '3'
-
 services:
   web:
-    image: python:3.8
-    command: bash -c "pip install --upgrade pip && pip install --no-cache-dir -r app/requirements.txt && pytest app/tests/unittest.py"
+    image: python:3.10
+    working_dir: /workspace
+    command: bash -c "pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt && PYTHONPATH=src pytest tests/unittest.py"
     volumes:
-      - ./app:/app
+      - ./apps/namemaster:/workspace
     ports:
       - "5000:5000"
     depends_on:
       - db
     environment:
-        postgresql-username: postgres
-        postgresql-password: password
-        postgresql-host: db
-        postgresql-port: 5432
-        postgresql-database: mydatabase
-        namemaster-secretkey: 9b908738adb74b789012511dce6e0bfe
+      postgresql-username: postgres
+      postgresql-password: password
+      postgresql-host: db
+      postgresql-port: 5432
+      postgresql-database: mydatabase
+      namemaster-secretkey: dev-only-secret-key
 
   db:
     image: postgres:12

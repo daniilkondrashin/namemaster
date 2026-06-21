@@ -1,0 +1,69 @@
+gateway:
+  enabled: true
+  name: public
+  namespace: nginx-gateway
+  gatewayClassName: nginx
+  annotations: {}
+  labels: {}
+  infrastructure:
+    annotations: {}
+    labels: {}
+  listeners:
+    - name: namemaster-http
+      hostname: namemaster.opsbox.org
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: namemaster-https
+      hostname: namemaster.opsbox.org
+      port: 443
+      protocol: HTTPS
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: namemaster-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: monitoring-http
+      hostname: monitoring.opsbox.org
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: monitoring-https
+      hostname: monitoring.opsbox.org
+      port: 443
+      protocol: HTTPS
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: monitoring-opsbox-org-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+
+certificates:
+  - enabled: true
+    name: namemaster
+    namespace: nginx-gateway
+    secretName: namemaster-tls
+    dnsNames:
+      - namemaster.opsbox.org
+    issuerRef:
+      kind: ClusterIssuer
+      name: letsencrypt-prod
+  - enabled: true
+    name: monitoring-opsbox-org
+    namespace: nginx-gateway
+    secretName: monitoring-opsbox-org-tls
+    dnsNames:
+      - monitoring.opsbox.org
+    issuerRef:
+      kind: ClusterIssuer
+      name: letsencrypt-prod

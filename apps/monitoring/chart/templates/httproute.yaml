@@ -1,0 +1,38 @@
+{{- if .Values.gateway.httpRoute.enabled }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "kubernetes-monitor.fullname" . }}
+  labels:
+    {{- include "kubernetes-monitor.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    {{- toYaml .Values.gateway.httpRoute.parentRefs | nindent 4 }}
+  hostnames:
+    {{- toYaml .Values.gateway.httpRoute.hostnames | nindent 4 }}
+  rules:
+    - backendRefs:
+        - name: {{ include "kubernetes-monitor.fullname" . }}
+          port: {{ .Values.service.port }}
+{{- if .Values.gateway.httpRoute.redirect.enabled }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "kubernetes-monitor.fullname" . }}-redirect
+  labels:
+    {{- include "kubernetes-monitor.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    {{- toYaml .Values.gateway.httpRoute.redirect.parentRefs | nindent 4 }}
+  hostnames:
+    {{- toYaml .Values.gateway.httpRoute.hostnames | nindent 4 }}
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: {{ .Values.gateway.httpRoute.redirect.scheme | quote }}
+            port: {{ .Values.gateway.httpRoute.redirect.port }}
+            statusCode: {{ .Values.gateway.httpRoute.redirect.statusCode }}
+{{- end }}
+{{- end }}

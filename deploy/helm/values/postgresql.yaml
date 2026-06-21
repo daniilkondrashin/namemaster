@@ -1,0 +1,7 @@
+auth:
+  username: namemaster
+  database: namemaster
+
+primary:
+  persistence:
+    storageClass: gp2

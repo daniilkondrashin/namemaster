@@ -1,0 +1,6 @@
+apiVersion: v2
+name: kubernetes-monitor
+description: Simple FastAPI dashboard for Kubernetes cluster monitoring.
+type: application
+version: 0.1.0
+appVersion: "latest"

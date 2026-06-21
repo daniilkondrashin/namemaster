@@ -1,0 +1,85 @@
+{{- $secretName := include "namemaster.fullname" . -}}
+{{- $postgresPasswordSecretName := default $secretName .Values.postgresql.existingSecret.name -}}
+{{- $postgresPasswordSecretKey := default "postgresql-password" .Values.postgresql.existingSecret.passwordKey -}}
+{{- $namemasterSecretKeySecretName := default $secretName .Values.namemaster.secretKey.existingSecret.name -}}
+{{- $namemasterSecretKeySecretKey := default "namemaster-secretkey" .Values.namemaster.secretKey.existingSecret.key -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "namemaster.fullname" . }}
+  labels:
+    {{- include "namemaster.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "namemaster.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "namemaster.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          env:
+            - name: postgresql-username
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: postgresql-username
+            - name: postgresql-password
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $postgresPasswordSecretName }}
+                  key: {{ $postgresPasswordSecretKey }}
+            - name: postgresql-host
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: postgresql-host
+            - name: postgresql-port
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: postgresql-port
+            - name: postgresql-database
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: postgresql-database
+            - name: namemaster-secretkey
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $namemasterSecretKeySecretName }}
+                  key: {{ $namemasterSecretKeySecretKey }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

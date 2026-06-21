@@ -1,98 +1,124 @@
-# Namemaster project
-The namemaster project is a simple web application for testing the deployment and learning of kubernetes. The user enters his name in the field and receives a response. The user's name is recorded in the database. All the names can be viewed in the history.
-![Namemaster screenshot](images/screenshot.png)
-## Docker
-Build the images and spin up the containers:
-```sh
+# Namemaster
+
+Small Kubernetes playground with two application services:
+
+- `apps/namemaster` - Flask application that stores submitted names in PostgreSQL.
+- `apps/monitoring` - FastAPI dashboard for cluster and `namemaster` pod metrics.
+
+![Namemaster screenshot](docs/images/screenshot.png)
+
+## Project Layout
+
+```text
+apps/
+  namemaster/
+    src/
+    tests/
+    chart/
+    Dockerfile
+  monitoring/
+    src/
+    tests/
+    chart/
+    Dockerfile
+
+deploy/
+  helm/
+    platform/gateway/
+    manifests/
+    scripts/
+    values/
+
+infra/
+  terraform/
+    backend/
+    k8s/
+
+docs/
+  examples/
+  images/
+
+scripts/
+```
+
+## Local Namemaster
+
+```bash
 docker-compose -f docker-compose.yaml up --build
 ```
-## Kubernetes
-**Install namemaster**
 
-Creating a namespace:
+Run the namemaster tests:
 
-```sh
-kubectl create namespace namemaster
-```
-Installing namemaster
-```sh
-helm upgrade --install namemaster .helm/namemaster --namespace namemaster
+```bash
+docker-compose -f docker-compose.test.yaml up --exit-code-from web
 ```
 
-**Configuration**
+## Private Docker Hub Images
 
-The following table lists the configurable parameters of the nextcloud chart and their default values.
+Both application charts use `dockerhub-pull-secret` by default. Create it in each
+namespace that pulls private images:
 
-|        Parameter             |         Description                              |       Default             |
-| ------                       | ------                                           | ------                    |
-| `image.repository`           | namemaster Image name                            | `daniil3680/namemaster`   |
-| `image.pullPolicy`           | Image pull policy                                | `IfNotPresent`            |
-| `image.tag`                  | namemaster Image tag                             | `latest`                  |
-| `rbac.create`                | Create rbac Role and RoleBinding                 | `false`                   |
-| `rbac.annotations`           | rbac Role and RoleBinding annotations            | `{}`                      |
-| `rbac.namesecret`            | Secret name for serviceaccount                   | `namemaster-serviceaccount-secret`|
-| `rbac.name`                  | Serviceaccount name                              | `namemaster-serviceaccount`|
-| `podAnnotations`             | Annotations to be added at 'pod' level           | `not set`                 |
-| `podLabels`                  | Labels to be added at 'pod' level                | `not set`                 |
-| `podSecurityContext`         | Optional security context for the namemaster pod (applies to all containers in the pod)| `not set`|
-| `securityContext`            | Optional security context for the NextCloud container| `not set`             |
-| `service.type`               | Kubernetes Service type                           | `ClusterIP`              |
-| `service.port`               | Kubernetes Service port                           | `80`                     |
-| `gateway.enabled`            | Create Gateway API Gateway and HTTPRoute          | `false`                  |
-| `gateway.className`          | GatewayClass name managed by NGINX Gateway Fabric | `nginx`                  |
-| `gateway.hostname`           | Public hostname for Gateway and HTTPRoute         | `example.online`         |
-| `gateway.annotations`        | Gateway annotations, including cert-manager issuer | `cert-manager.io/cluster-issuer: letsencrypt-prod` |
-| `gateway.tls.enabled`        | Enable HTTPS listener on the Gateway              | `true`                   |
-| `gateway.tls.secretName`     | TLS secret created by cert-manager                | `namemaster-tls`         |
-| `gateway.route.paths`        | HTTPRoute path matches                            | `/`                      |
-| `postgresql.username`        | username postgres                                 | `namemaster`             |
-| `postgresql.existingSecret.name` | Existing Secret with database password        | `postgresql`             |
-| `postgresql.existingSecret.passwordKey` | Password key in existing Secret        | `password`               |
-| `postgresql.host`            | host postgres                                     | `postgresql`             |
-| `postgresql.port`            | port postgres                                     | `5432`                   |
-| `postgresql.database`        | database postgres                                 | `namemaster`             |
-| `namemaster.secretkey`       | secret key for namemaster operation               | `''`                     |
-| `resources`                  | CPU/Memory resource requests/limits               | `{}`                     |
-| `autoscaling.enabled`        | Boolean to create a HorizontalPodAutoscaler       | `false`                  |
-| `autoscaling.minReplicas`    | Min. pods for the namemaster HorizontalPodAutoscaler | `1`                   |
-| `autoscaling.maxReplicas`    | Max. pods for the namemaster HorizontalPodAutoscaler | `10`                  |
-| `autoscaling.targetCPUUtilizationPercentage`| CPU threshold percent for the HorizontalPodAutoscale | `80`   |
-| `autoscaling.targetMemoryUtilizationPercentage`| Memory threshold percent for the HorizontalPodAutoscale | `80`   |
+```bash
+export DOCKERHUB_USERNAME="daniil3680"
+export DOCKERHUB_TOKEN="paste-dockerhub-access-token-here"
 
-Generate a token and paste it into namemaster.secretkey
-
-**Install postgresql**
-
-```sh
-helm install postgresql bitnami/postgresql --namespace namemaster
+NAMESPACE=namemaster scripts/create-dockerhub-pull-secret.example.sh
+NAMESPACE=monitoring scripts/create-dockerhub-pull-secret.example.sh
 ```
-Enter the postgresql password in postgresql.password
 
-## Terraform remote state
+## Namemaster Secret Key
 
-Bootstrap the S3 bucket first:
+The `namemaster` chart generates `namemaster-secretkey` on the first install and
+keeps the existing value on later upgrades.
 
-```sh
-cd terraform/backend
+To manage it manually instead:
+
+```bash
+kubectl create secret generic namemaster-secret \
+  --namespace namemaster \
+  --from-literal=namemaster-secretkey="$(openssl rand -hex 32)"
+
+helm upgrade --install namemaster apps/namemaster/chart \
+  --namespace namemaster \
+  --set namemaster.secretKey.existingSecret.name=namemaster-secret
+```
+
+## Kubernetes Deploy
+
+Install platform add-ons and application charts with Helm:
+
+```bash
+deploy/helm/scripts/00-namespaces.sh
+deploy/helm/scripts/01-crds.sh
+deploy/helm/scripts/02-platform.sh
+deploy/helm/scripts/03-data.sh
+deploy/helm/scripts/04-observability.sh
+deploy/helm/scripts/05-apps.sh
+```
+
+The shared Gateway is owned by `deploy/helm/platform/gateway` and lives in the
+`nginx-gateway` namespace. Application charts create only `HTTPRoute` resources.
+
+Render or install individual app charts:
+
+```bash
+helm template namemaster apps/namemaster/chart --namespace namemaster
+helm template kubernetes-monitor apps/monitoring/chart --namespace monitoring
+```
+
+## Terraform
+
+Terraform is limited to cloud infrastructure:
+
+```bash
+cd infra/terraform/backend
 terraform init
+terraform apply
+
+cd ../k8s
+terraform init -backend-config=backend.hcl -migrate-state
 terraform apply
 ```
 
-Then copy the generated bucket name into the backend configs:
-
-```sh
-terraform output -raw state_bucket_name
-cp ../k8s/backend.hcl.example ../k8s/backend.hcl
-cp ../helm/backend.hcl.example ../helm/backend.hcl
-```
-
-Replace the placeholder bucket value in both `backend.hcl` files, then initialize the stacks:
-
-```sh
-cd ../k8s
-terraform init -backend-config=backend.hcl -migrate-state
-
-cd ../helm
-terraform init -backend-config=backend.hcl -migrate-state
-terraform apply -var="terraform_state_bucket=<state-bucket-name>"
-```
+The old Terraform Helm stack was removed. Helm releases are now managed from
+`deploy/helm`.

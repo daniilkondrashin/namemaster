@@ -1,0 +1,104 @@
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 1
+
+image:
+  repository: daniil3680/monitoring
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: dockerhub-pull-secret
+
+serviceAccount:
+  create: true
+  name: ""
+  automount: true
+
+rbac:
+  create: true
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+env:
+  metricsPollInterval: "5"
+  monitoredPodSelector: app.kubernetes.io/name=namemaster
+  logLevel: INFO
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: http
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+probes:
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  liveness:
+    initialDelaySeconds: 10
+    periodSeconds: 30
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+gateway:
+  httpRoute:
+    enabled: true
+    hostnames:
+      - monitoring.opsbox.org
+    parentRefs:
+      - name: public
+        namespace: nginx-gateway
+        sectionName: monitoring-https
+    redirect:
+      enabled: true
+      parentRefs:
+        - name: public
+          namespace: nginx-gateway
+          sectionName: monitoring-http
+      scheme: https
+      port: 443
+      statusCode: 301
+
+certificate:
+  enabled: false
+  name: monitoring-opsbox-org
+  namespace: nginx-gateway
+  secretName: monitoring-opsbox-org-tls
+  dnsNames:
+    - monitoring.opsbox.org
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod
+
+serviceMonitor:
+  enabled: false
+  interval: 30s
+  labels: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

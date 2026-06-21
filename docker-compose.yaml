@@ -1,21 +1,21 @@
-version: '3'
-
 services:
   web:
-    image: daniil3680/namemaster 
+    build:
+      context: ./apps/namemaster
+    image: daniil3680/namemaster
     volumes:
-      - ./app:/app
+      - ./apps/namemaster/src:/app
     ports:
       - "5000:5000"
     depends_on:
       - db
     environment:
-        postgresql-username: postgres
-        postgresql-password: password
-        postgresql-host: db
-        postgresql-port: 5432
-        postgresql-database: mydatabase
-        namemaster-secretkey: 9b908738adb74b789012511dce6e0bfe
+      postgresql-username: postgres
+      postgresql-password: password
+      postgresql-host: db
+      postgresql-port: 5432
+      postgresql-database: mydatabase
+      namemaster-secretkey: dev-only-secret-key
 
   db:
     image: postgres:12
