@@ -6,10 +6,9 @@ replicaCount: 1
 
 image:
   repository: daniil3680/namemaster
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: latest
-
 imagePullSecrets:
   - name: dockerhub-pull-secret
 
@@ -107,7 +106,7 @@ resources:
 autoscaling:
   enabled: true
   minReplicas: 1
-  maxReplicas: 10
+  maxReplicas: 20
   targetCPUUtilizationPercentage: 80
   targetMemoryUtilizationPercentage: 80
 

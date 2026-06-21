@@ -9,13 +9,41 @@ the cloud infrastructure/EKS layer.
 deploy/helm/scripts/00-namespaces.sh
 deploy/helm/scripts/01-crds.sh
 deploy/helm/scripts/02-platform.sh
-deploy/helm/scripts/03-data.sh
-deploy/helm/scripts/04-observability.sh
-deploy/helm/scripts/05-apps.sh
+deploy/helm/scripts/03-capacity.sh
+deploy/helm/scripts/04-data.sh
+deploy/helm/scripts/05-observability.sh
+deploy/helm/scripts/06-apps.sh
 ```
 
-`05-apps.sh` installs `namemaster`, the Kubernetes monitoring dashboard, and
+`03-capacity.sh` installs Karpenter into `kube-system` and applies the default
+`NodePool` and `EC2NodeClass` from `deploy/helm/platform/karpenter`. Terraform
+must be applied first because this script reads Karpenter IAM and queue outputs
+from `infra/terraform/k8s`.
+
+`06-apps.sh` installs `namemaster`, the Kubernetes monitoring dashboard, and
 the internal Locust load generator.
+
+## Node Autoscaling
+
+Terraform owns the AWS resources Karpenter needs: Pod Identity, controller IAM,
+node IAM role, EKS access entry, interruption queue, and discovery tags on the
+private subnets and node security group.
+
+Helm owns the Kubernetes side:
+
+- Karpenter controller chart in `kube-system`
+- `EC2NodeClass/default`
+- `NodePool/default`
+
+The default NodePool starts with on-demand Linux `amd64` capacity and a small
+cluster-wide limit. Use Locust to create pending pods and watch Karpenter add
+nodes:
+
+```bash
+kubectl get nodepool,ec2nodeclass,nodeclaim
+kubectl logs -n kube-system deploy/karpenter -f
+kubectl get nodes -w
+```
 
 ## Gateway
 

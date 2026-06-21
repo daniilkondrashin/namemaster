@@ -16,6 +16,11 @@ data "aws_availability_zones" "available" {
 
 locals {
   cluster_name = "education-eks-${random_string.suffix.result}"
+
+  tags = {
+    Project   = "namemaster"
+    Terraform = "true"
+  }
 }
 
 resource "random_string" "suffix" {
@@ -45,7 +50,10 @@ module "vpc" {
 
   private_subnet_tags = {
     "kubernetes.io/role/internal-elb" = 1
+    "karpenter.sh/discovery"          = local.cluster_name
   }
+
+  tags = local.tags
 }
 
 module "eks" {
@@ -58,8 +66,16 @@ module "eks" {
   cluster_endpoint_public_access           = true
   enable_cluster_creator_admin_permissions = true
 
+  cluster_addons = {
+    eks-pod-identity-agent = {}
+  }
+
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
+
+  node_security_group_tags = {
+    "karpenter.sh/discovery" = local.cluster_name
+  }
 
   eks_managed_node_group_defaults = {
     ami_type = "AL2023_x86_64_STANDARD"
@@ -73,9 +89,34 @@ module "eks" {
 
       min_size     = 1
       max_size     = 3
-      desired_size = 3
+      desired_size = 2
+
+      labels = {
+        "karpenter.sh/controller" = "true"
+      }
     }
   }
+
+  tags = local.tags
+}
+
+module "karpenter" {
+  source  = "terraform-aws-modules/eks/aws//modules/karpenter"
+  version = "20.37.2"
+
+  cluster_name          = module.eks.cluster_name
+  enable_v1_permissions = true
+
+  node_iam_role_use_name_prefix = false
+  node_iam_role_name            = module.eks.cluster_name
+
+  create_pod_identity_association = true
+
+  node_iam_role_additional_policies = {
+    AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  }
+
+  tags = local.tags
 }
 
 # https://aws.amazon.com/blogs/containers/amazon-ebs-csi-driver-is-now-generally-available-in-amazon-eks-add-ons/

@@ -27,6 +27,7 @@ apps/
 
 deploy/
   helm/
+    platform/karpenter/
     platform/gateway/
     manifests/
     scripts/
@@ -94,13 +95,27 @@ Install platform add-ons and application charts with Helm:
 deploy/helm/scripts/00-namespaces.sh
 deploy/helm/scripts/01-crds.sh
 deploy/helm/scripts/02-platform.sh
-deploy/helm/scripts/03-data.sh
-deploy/helm/scripts/04-observability.sh
-deploy/helm/scripts/05-apps.sh
+deploy/helm/scripts/03-capacity.sh
+deploy/helm/scripts/04-data.sh
+deploy/helm/scripts/05-observability.sh
+deploy/helm/scripts/06-apps.sh
 ```
 
 The shared Gateway is owned by `deploy/helm/platform/gateway` and lives in the
 `nginx-gateway` namespace. Application charts create only `HTTPRoute` resources.
+
+`03-capacity.sh` installs Karpenter and applies the default `NodePool` and
+`EC2NodeClass`. Run `terraform apply` in `infra/terraform/k8s` first because
+the script reads the cluster name, endpoint, Karpenter interruption queue, and
+node IAM role from Terraform outputs.
+
+Check node autoscaling:
+
+```bash
+kubectl get nodepool,ec2nodeclass,nodeclaim
+kubectl logs -n kube-system deploy/karpenter -f
+kubectl get nodes -w
+```
 
 Render or install individual app charts:
 

@@ -20,3 +20,18 @@ output "cluster_name" {
   description = "Kubernetes Cluster Name"
   value       = module.eks.cluster_name
 }
+
+output "karpenter_controller_iam_role_arn" {
+  description = "IAM role ARN used by the Karpenter controller through EKS Pod Identity"
+  value       = module.karpenter.iam_role_arn
+}
+
+output "karpenter_node_iam_role_name" {
+  description = "IAM role name used by EC2 nodes launched by Karpenter"
+  value       = module.karpenter.node_iam_role_name
+}
+
+output "karpenter_queue_name" {
+  description = "SQS interruption queue name consumed by Karpenter"
+  value       = module.karpenter.queue_name
+}

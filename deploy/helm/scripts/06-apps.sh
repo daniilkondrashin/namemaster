@@ -5,12 +5,15 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
 helm upgrade --install namemaster "${ROOT_DIR}/apps/namemaster/chart" \
   --namespace namemaster \
-  --create-namespace
+  --create-namespace \
+  --reuse-values
 
 helm upgrade --install kubernetes-monitor "${ROOT_DIR}/apps/monitoring/chart" \
   --namespace monitoring \
-  --create-namespace
+  --create-namespace \
+  --reuse-values
 
 helm upgrade --install namemaster-locust "${ROOT_DIR}/apps/locust/chart" \
   --namespace loadtest \
-  --create-namespace
+  --create-namespace \
+  --reuse-values
