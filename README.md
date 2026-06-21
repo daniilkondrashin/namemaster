@@ -1,9 +1,10 @@
 # Namemaster
 
-Small Kubernetes playground with two application services:
+Small Kubernetes playground with two application services and one load-test tool:
 
 - `apps/namemaster` - Flask application that stores submitted names in PostgreSQL.
 - `apps/monitoring` - FastAPI dashboard for cluster and `namemaster` pod metrics.
+- `apps/locust` - internal Locust load generator for testing `namemaster` HPA.
 
 ![Namemaster screenshot](docs/images/screenshot.png)
 
@@ -21,6 +22,8 @@ apps/
     tests/
     chart/
     Dockerfile
+  locust/
+    chart/
 
 deploy/
   helm/
@@ -59,7 +62,7 @@ Both application charts use `dockerhub-pull-secret` by default. Create it in eac
 namespace that pulls private images:
 
 ```bash
-export DOCKERHUB_USERNAME="daniil3680"
+export DOCKERHUB_USERNAME="username"
 export DOCKERHUB_TOKEN="paste-dockerhub-access-token-here"
 
 NAMESPACE=namemaster scripts/create-dockerhub-pull-secret.example.sh
@@ -104,6 +107,53 @@ Render or install individual app charts:
 ```bash
 helm template namemaster apps/namemaster/chart --namespace namemaster
 helm template kubernetes-monitor apps/monitoring/chart --namespace monitoring
+helm template namemaster-locust apps/locust/chart --namespace loadtest
+```
+
+## Internal Load Test
+
+Locust is installed into the `loadtest` namespace and targets the internal
+Kubernetes Service DNS name by default:
+
+```text
+http://namemaster.namemaster.svc.cluster.local
+```
+
+That keeps generated traffic inside the cluster instead of sending it through
+Cloudflare or the public AWS ingress.
+
+Open the Locust UI locally:
+
+```bash
+kubectl port-forward -n loadtest service/namemaster-locust 8089:8089
+```
+
+Then open `http://127.0.0.1:8089/` and start a test against the prefilled host.
+
+Watch HPA and pod scaling:
+
+```bash
+kubectl get hpa -n namemaster -w
+kubectl get pods -n namemaster -w
+kubectl top pods -n namemaster
+```
+
+For a more predictable CPU-based HPA test, enable the protected load-test
+endpoint in `namemaster` and pass the same token to Locust:
+
+```bash
+TOKEN="$(openssl rand -hex 24)"
+
+helm upgrade --install namemaster apps/namemaster/chart \
+  --namespace namemaster \
+  --set loadTest.enabled=true \
+  --set loadTest.token="${TOKEN}"
+
+helm upgrade --install namemaster-locust apps/locust/chart \
+  --namespace loadtest \
+  --set loadTest.mode=cpu \
+  --set loadTest.token="${TOKEN}" \
+  --set loadTest.cpuDurationMs=50
 ```
 
 ## Terraform

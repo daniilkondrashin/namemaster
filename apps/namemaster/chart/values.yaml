@@ -13,6 +13,12 @@ image:
 imagePullSecrets:
   - name: dockerhub-pull-secret
 
+app:
+  containerPort: 5000
+
+gunicorn:
+  args: "--workers=3 --threads=2 --timeout=60"
+
 
 # Creates a ServiceAccount for the ability to install and modify resources in namespace: namemaster using gitlab runner.
 # The token is written to the secret "namemaster-serviceaccount-secret".
@@ -77,6 +83,13 @@ namemaster:
       name: ""
       key: namemaster-secretkey
 
+loadTest:
+  enabled: false
+  token: ""
+  existingSecret:
+    name: ""
+    tokenKey: load-test-token
+
 # Pod limits
 resources: 
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -84,7 +97,7 @@ resources:
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   limits:
-    cpu: 100m
+    cpu: 500m
     memory: 256Mi
   requests:
     cpu: 100m
@@ -97,3 +110,17 @@ autoscaling:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 80
   targetMemoryUtilizationPercentage: 80
+
+probes:
+  liveness:
+    path: /healthz
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 12
+  readiness:
+    path: /healthz
+    initialDelaySeconds: 3
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 6

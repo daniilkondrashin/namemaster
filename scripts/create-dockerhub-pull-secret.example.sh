@@ -2,7 +2,7 @@
 set -eu
 
 # Usage:
-#   export DOCKERHUB_USERNAME="daniil3680"
+#   export DOCKERHUB_USERNAME="username"
 #   export DOCKERHUB_TOKEN="paste-dockerhub-access-token-here"
 #   NAMESPACE=namemaster scripts/create-dockerhub-pull-secret.example.sh
 #   NAMESPACE=monitoring scripts/create-dockerhub-pull-secret.example.sh

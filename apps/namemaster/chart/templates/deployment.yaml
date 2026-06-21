@@ -3,6 +3,8 @@
 {{- $postgresPasswordSecretKey := default "postgresql-password" .Values.postgresql.existingSecret.passwordKey -}}
 {{- $namemasterSecretKeySecretName := default $secretName .Values.namemaster.secretKey.existingSecret.name -}}
 {{- $namemasterSecretKeySecretKey := default "namemaster-secretkey" .Values.namemaster.secretKey.existingSecret.key -}}
+{{- $loadTestSecretName := default $secretName .Values.loadTest.existingSecret.name -}}
+{{- $loadTestTokenKey := default "load-test-token" .Values.loadTest.existingSecret.tokenKey -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -40,9 +42,11 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.service.port }}
+              containerPort: {{ .Values.app.containerPort }}
               protocol: TCP
           env:
+            - name: GUNICORN_CMD_ARGS
+              value: {{ .Values.gunicorn.args | quote }}
             - name: postgresql-username
               valueFrom:
                 secretKeyRef:
@@ -73,13 +77,28 @@ spec:
                 secretKeyRef:
                   name: {{ $namemasterSecretKeySecretName }}
                   key: {{ $namemasterSecretKeySecretKey }}
+            {{- if .Values.loadTest.enabled }}
+            - name: LOAD_TEST_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $loadTestSecretName }}
+                  key: {{ $loadTestTokenKey }}
+            {{- end }}
           livenessProbe:
             httpGet:
-              path: /
-              port: 5000
+              path: {{ .Values.probes.liveness.path | quote }}
+              port: {{ .Values.app.containerPort }}
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
           readinessProbe:
             httpGet:
-              path: /
-              port: 5000
+              path: {{ .Values.probes.readiness.path | quote }}
+              port: {{ .Values.app.containerPort }}
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

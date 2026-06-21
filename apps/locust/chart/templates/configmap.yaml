@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "namemaster-locust.fullname" . }}
+  labels:
+    {{- include "namemaster-locust.labels" . | nindent 4 }}
+data:
+  locustfile.py: |
+    import os
+    import random
+    import re
+    import string
+
+    from locust import HttpUser, between, task
+
+    LOAD_TEST_MODE = os.getenv("LOAD_TEST_MODE", "form").lower()
+    LOAD_TEST_TOKEN = os.getenv("LOAD_TEST_TOKEN", "")
+    CPU_LOAD_DURATION_MS = os.getenv("CPU_LOAD_DURATION_MS", "100")
+
+
+    class NamemasterUser(HttpUser):
+        wait_time = between(0.1, 0.5)
+
+        def _open_home(self):
+            self.client.get("/", name="GET /")
+
+        def _submit_name(self):
+            page = self.client.get("/", name="GET / form")
+            match = re.search(r'name="csrf_token".*?value="([^"]+)"', page.text)
+            token = match.group(1) if match else ""
+            name = "load" + "".join(random.choices(string.ascii_lowercase, k=8))
+
+            self.client.post(
+                "/",
+                data={"csrf_token": token, "name": name},
+                name="POST / name",
+            )
+
+        def _load_cpu(self):
+            self.client.post(
+                f"/load/cpu?duration_ms={CPU_LOAD_DURATION_MS}",
+                headers={"X-Load-Test-Token": LOAD_TEST_TOKEN},
+                name="POST /load/cpu",
+            )
+
+        @task
+        def load(self):
+            if LOAD_TEST_MODE == "cpu":
+                self._load_cpu()
+                return
+            if random.random() < 0.3:
+                self._open_home()
+                return
+            self._submit_name()

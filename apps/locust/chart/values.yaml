@@ -1,0 +1,65 @@
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 1
+
+image:
+  repository: locustio/locust
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+target:
+  host: http://namemaster.namemaster.svc.cluster.local
+
+loadTest:
+  mode: form
+  token: ""
+  existingSecret:
+    name: ""
+    tokenKey: load-test-token
+  cpuDurationMs: 50
+
+locust:
+  webPort: 8089
+  logLevel: INFO
+
+loadJob:
+  enabled: false
+  users: 300
+  spawnRate: 30
+  runTime: 10m
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+
+service:
+  type: ClusterIP
+  port: 8089
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

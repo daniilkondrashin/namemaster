@@ -1,7 +1,9 @@
+import hashlib
 import os
+import time
 from collections import namedtuple
 
-from flask import Flask, render_template, redirect, url_for, request
+from flask import Flask, abort, render_template, redirect, url_for, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import desc
 
@@ -30,6 +32,31 @@ class Message(db.Model):
 
 with app.app_context():
     db.create_all()
+
+@app.route("/healthz", methods=['GET'])
+def healthz():
+    return {"status": "ok"}
+
+@app.route("/load/cpu", methods=['GET', 'POST'])
+def load_cpu():
+    token = os.getenv("LOAD_TEST_TOKEN")
+    if not token or request.headers.get("X-Load-Test-Token") != token:
+        abort(404)
+
+    try:
+        duration_ms = int(request.args.get("duration_ms", "100"))
+    except ValueError:
+        duration_ms = 100
+    duration_ms = max(1, min(duration_ms, 500))
+
+    deadline = time.perf_counter() + duration_ms / 1000
+    digest = b"namemaster"
+    loops = 0
+    while time.perf_counter() < deadline:
+        digest = hashlib.sha256(digest + loops.to_bytes(8, "little", signed=False)).digest()
+        loops += 1
+
+    return {"status": "ok", "duration_ms": duration_ms, "loops": loops}
 
 @app.route("/", methods=['POST', 'GET'])
 def main():

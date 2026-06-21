@@ -1,0 +1,87 @@
+{{- if .Values.loadJob.enabled }}
+{{- $loadTestSecretName := default (include "namemaster-locust.fullname" .) .Values.loadTest.existingSecret.name }}
+{{- $loadTestTokenKey := default "load-test-token" .Values.loadTest.existingSecret.tokenKey }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "namemaster-locust.fullname" . }}-run-{{ .Release.Revision }}
+  labels:
+    {{- include "namemaster-locust.labels" . | nindent 4 }}
+    app.kubernetes.io/component: load-job
+spec:
+  backoffLimit: {{ .Values.loadJob.backoffLimit }}
+  ttlSecondsAfterFinished: {{ .Values.loadJob.ttlSecondsAfterFinished }}
+  template:
+    metadata:
+      labels:
+        {{- include "namemaster-locust.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: load-job
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: locust
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - --locustfile=/mnt/locust/locustfile.py
+            - --host={{ .Values.target.host }}
+            - --headless
+            - --users={{ .Values.loadJob.users }}
+            - --spawn-rate={{ .Values.loadJob.spawnRate }}
+            - --run-time={{ .Values.loadJob.runTime }}
+            - --loglevel={{ .Values.locust.logLevel }}
+          env:
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+            - name: LOAD_TEST_MODE
+              value: {{ .Values.loadTest.mode | quote }}
+            - name: LOAD_TEST_TOKEN
+              {{- if or .Values.loadTest.token .Values.loadTest.existingSecret.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $loadTestSecretName }}
+                  key: {{ $loadTestTokenKey }}
+              {{- else }}
+              value: {{ .Values.loadTest.token | quote }}
+              {{- end }}
+            - name: CPU_LOAD_DURATION_MS
+              value: {{ .Values.loadTest.cpuDurationMs | quote }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          volumeMounts:
+            - name: locustfile
+              mountPath: /mnt/locust
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: home
+              mountPath: /home/locust
+      volumes:
+        - name: locustfile
+          configMap:
+            name: {{ include "namemaster-locust.fullname" . }}
+        - name: tmp
+          emptyDir: {}
+        - name: home
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

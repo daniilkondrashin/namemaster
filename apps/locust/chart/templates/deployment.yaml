@@ -1,0 +1,86 @@
+{{- $loadTestSecretName := default (include "namemaster-locust.fullname" .) .Values.loadTest.existingSecret.name }}
+{{- $loadTestTokenKey := default "load-test-token" .Values.loadTest.existingSecret.tokenKey }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "namemaster-locust.fullname" . }}
+  labels:
+    {{- include "namemaster-locust.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "namemaster-locust.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "namemaster-locust.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: locust
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - --locustfile=/mnt/locust/locustfile.py
+            - --host={{ .Values.target.host }}
+            - --web-host=0.0.0.0
+            - --web-port={{ .Values.locust.webPort }}
+            - --loglevel={{ .Values.locust.logLevel }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.locust.webPort }}
+              protocol: TCP
+          env:
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+            - name: LOAD_TEST_MODE
+              value: {{ .Values.loadTest.mode | quote }}
+            - name: LOAD_TEST_TOKEN
+              {{- if or .Values.loadTest.token .Values.loadTest.existingSecret.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $loadTestSecretName }}
+                  key: {{ $loadTestTokenKey }}
+              {{- else }}
+              value: {{ .Values.loadTest.token | quote }}
+              {{- end }}
+            - name: CPU_LOAD_DURATION_MS
+              value: {{ .Values.loadTest.cpuDurationMs | quote }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          volumeMounts:
+            - name: locustfile
+              mountPath: /mnt/locust
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: home
+              mountPath: /home/locust
+      volumes:
+        - name: locustfile
+          configMap:
+            name: {{ include "namemaster-locust.fullname" . }}
+        - name: tmp
+          emptyDir: {}
+        - name: home
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
