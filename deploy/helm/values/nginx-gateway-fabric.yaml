@@ -1,1 +1,10 @@
-{}
+nginx:
+  replicas: 3
+  pod:
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            gateway.networking.k8s.io/gateway-name: public

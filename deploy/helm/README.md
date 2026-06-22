@@ -36,7 +36,9 @@ Helm owns the Kubernetes side:
 - `NodePool/default`
 
 The default NodePool starts with on-demand Linux `amd64` capacity and a small
-cluster-wide limit. Use Locust to create pending pods and watch Karpenter add
+cluster-wide limit. It consolidates empty or underutilized Karpenter-owned nodes
+after 10 minutes, which reduces waste without reacting immediately to short
+HPA/load-test bursts. Use Locust to create pending pods and watch Karpenter add
 nodes:
 
 ```bash
@@ -44,6 +46,11 @@ kubectl get nodepool,ec2nodeclass,nodeclaim
 kubectl logs -n kube-system deploy/karpenter -f
 kubectl get nodes -w
 ```
+
+Nodes without the `karpenter.sh/nodepool` label belong to the EKS managed node
+group, not Karpenter. Karpenter will not consolidate or replace those nodes.
+The managed node group keeps two baseline nodes; application pods may run there,
+and Karpenter creates additional nodes when pending pods need more capacity.
 
 ## Gateway
 
@@ -70,6 +77,54 @@ kubectl port-forward -n loadtest service/namemaster-locust 8089:8089
 The default load-test target is
 `http://namemaster.namemaster.svc.cluster.local`, so generated traffic stays on
 the cluster network.
+
+## Delete Resources
+
+Remove resources in reverse dependency order: applications first, then data and
+observability, then autoscaling and gateway components. Run this before
+`terraform destroy` so Kubernetes controllers can clean up AWS load balancers,
+volumes, and Karpenter-managed nodes.
+
+```bash
+helm uninstall namemaster-locust --namespace loadtest --ignore-not-found
+helm uninstall kubernetes-monitor --namespace monitoring --ignore-not-found
+helm uninstall namemaster --namespace namemaster --ignore-not-found
+helm uninstall postgresql --namespace namemaster --ignore-not-found
+
+helm uninstall prometheus --namespace monitoring --ignore-not-found
+helm uninstall metrics-server --namespace kube-system --ignore-not-found
+
+kubectl delete nodepool default --ignore-not-found
+kubectl delete nodeclaim --all --ignore-not-found
+kubectl wait --for=delete nodeclaim --all --timeout=10m || true
+helm uninstall karpenter --namespace kube-system --ignore-not-found
+
+helm uninstall shared-gateway --namespace nginx-gateway --ignore-not-found
+kubectl delete clusterissuer letsencrypt-prod --ignore-not-found
+helm uninstall cert-manager --namespace cert-manager --ignore-not-found
+helm uninstall ngf --namespace nginx-gateway --ignore-not-found
+```
+
+Delete project namespaces only after the Helm releases are gone:
+
+```bash
+kubectl delete namespace \
+  loadtest \
+  monitoring \
+  namemaster \
+  cert-manager \
+  nginx-gateway \
+  gitlab-runner \
+  --ignore-not-found
+```
+
+Check for leftovers before destroying the EKS cluster:
+
+```bash
+kubectl get svc -A --field-selector spec.type=LoadBalancer
+kubectl get pv,pvc -A
+kubectl get nodeclaim
+```
 
 ## Migration From Terraform Helm Releases
 

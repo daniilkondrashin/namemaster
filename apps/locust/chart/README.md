@@ -14,7 +14,7 @@ This keeps load-test traffic inside the cluster and avoids the public
 ## Install
 
 ```bash
-helm upgrade --install namemaster-locust ./chart \
+helm upgrade --install namemaster-locust apps/locust/chart \
   --namespace loadtest \
   --create-namespace
 ```
@@ -35,27 +35,66 @@ Start with a moderate test, for example:
 
 By default Locust submits the normal HTML form. For more predictable HPA tests,
 enable the protected CPU endpoint in the `namemaster` chart and pass the same
-token to Locust:
+token to Locust. The endpoint returns `404` when the token is missing or does
+not match, so keep both namespaces on the same Secret and restart pods after
+rotating it:
 
 ```bash
 TOKEN="$(openssl rand -hex 24)"
 
-helm upgrade --install namemaster ../../namemaster/chart \
-  --namespace namemaster \
-  --set loadTest.enabled=true \
-  --set loadTest.token="${TOKEN}"
+kubectl create namespace namemaster --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace loadtest --dry-run=client -o yaml | kubectl apply -f -
 
-helm upgrade --install namemaster-locust ./chart \
+kubectl create secret generic namemaster-load-test \
+  --namespace namemaster \
+  --from-literal=load-test-token="${TOKEN}" \
+  --dry-run=client \
+  -o yaml | kubectl apply -f -
+
+kubectl create secret generic namemaster-load-test \
   --namespace loadtest \
+  --from-literal=load-test-token="${TOKEN}" \
+  --dry-run=client \
+  -o yaml | kubectl apply -f -
+
+helm upgrade --install namemaster apps/namemaster/chart \
+  --namespace namemaster \
+  --reuse-values \
+  --set loadTest.enabled=true \
+  --set loadTest.existingSecret.name=namemaster-load-test
+
+helm upgrade --install namemaster-locust apps/locust/chart \
+  --namespace loadtest \
+  --reuse-values \
   --set loadTest.mode=cpu \
-  --set loadTest.token="${TOKEN}" \
+  --set loadTest.existingSecret.name=namemaster-load-test \
   --set loadTest.cpuDurationMs=50
+
+kubectl rollout restart deployment/namemaster -n namemaster
+kubectl rollout restart deployment/namemaster-locust -n loadtest
+kubectl rollout status deployment/namemaster -n namemaster
+kubectl rollout status deployment/namemaster-locust -n loadtest
+```
+
+Check the CPU endpoint from inside the cluster:
+
+```bash
+kubectl run namemaster-load-cpu-check \
+  --namespace loadtest \
+  --rm \
+  -i \
+  --restart=Never \
+  --image=curlimages/curl \
+  -- curl -fsS \
+  -X POST \
+  "http://namemaster.namemaster.svc.cluster.local/load/cpu?duration_ms=50" \
+  -H "X-Load-Test-Token: ${TOKEN}"
 ```
 
 ## Headless Run
 
 ```bash
-helm upgrade --install namemaster-locust ./chart \
+helm upgrade --install namemaster-locust apps/locust/chart \
   --namespace loadtest \
   --create-namespace \
   --set loadJob.enabled=true \
@@ -74,7 +113,7 @@ kubectl logs -n loadtest -l app.kubernetes.io/component=load-job -f
 Disable or stop the job:
 
 ```bash
-helm upgrade --install namemaster-locust ./chart \
+helm upgrade --install namemaster-locust apps/locust/chart \
   --namespace loadtest \
   --set loadJob.enabled=false
 ```

@@ -6,7 +6,7 @@ provider "aws" {
 }
 
 # Filter out local zones, which are not currently supported
-# with managed node groups
+# with managed node groups.
 data "aws_availability_zones" "available" {
   filter {
     name   = "opt-in-status"
@@ -15,10 +15,10 @@ data "aws_availability_zones" "available" {
 }
 
 locals {
-  cluster_name = "education-eks-${random_string.suffix.result}"
+  cluster_name = "${var.name_prefix}-k8s-${random_string.suffix.result}"
 
   tags = {
-    Project   = "namemaster"
+    Project   = var.project
     Terraform = "true"
   }
 }
@@ -28,126 +28,61 @@ resource "random_string" "suffix" {
   special = false
 }
 
-module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "5.21.0"
+module "network" {
+  source = "./modules/network"
 
-  name = "education-vpc"
+  name         = "${var.name_prefix}-vpc"
+  cluster_name = local.cluster_name
+  azs          = slice(data.aws_availability_zones.available.names, 0, 3)
 
-  cidr = "10.0.0.0/16"
-  azs  = slice(data.aws_availability_zones.available.names, 0, 3)
-
-  private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-  public_subnets  = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
-
-  enable_nat_gateway   = true
-  single_nat_gateway   = true
-  enable_dns_hostnames = true
-
-  public_subnet_tags = {
-    "kubernetes.io/role/elb" = 1
-  }
-
-  private_subnet_tags = {
-    "kubernetes.io/role/internal-elb" = 1
-    "karpenter.sh/discovery"          = local.cluster_name
-  }
+  cidr            = var.vpc_cidr
+  private_subnets = var.private_subnets
+  public_subnets  = var.public_subnets
 
   tags = local.tags
 }
 
-module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "20.37.2"
+module "eks_cluster" {
+  source = "./modules/eks"
 
   cluster_name    = local.cluster_name
-  cluster_version = "1.36"
+  cluster_version = var.cluster_version
 
-  cluster_endpoint_public_access           = true
-  enable_cluster_creator_admin_permissions = true
-
-  cluster_addons = {
-    eks-pod-identity-agent = {}
-  }
-
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets
-
-  node_security_group_tags = {
-    "karpenter.sh/discovery" = local.cluster_name
-  }
-
-  eks_managed_node_group_defaults = {
-    ami_type = "AL2023_x86_64_STANDARD"
-  }
-
-  eks_managed_node_groups = {
-    one = {
-      name = "node-group-1"
-
-      instance_types = ["t3.medium"]
-
-      min_size     = 1
-      max_size     = 3
-      desired_size = 2
-
-      labels = {
-        "karpenter.sh/controller" = "true"
-      }
-    }
-  }
+  vpc_id     = module.network.vpc_id
+  subnet_ids = module.network.private_subnets
 
   tags = local.tags
 }
 
-module "karpenter" {
-  source  = "terraform-aws-modules/eks/aws//modules/karpenter"
-  version = "20.37.2"
+module "iam" {
+  source = "./modules/iam"
 
-  cluster_name          = module.eks.cluster_name
-  enable_v1_permissions = true
+  cluster_name  = module.eks_cluster.cluster_name
+  cluster_arn   = module.eks_cluster.cluster_arn
+  oidc_provider = module.eks_cluster.oidc_provider
 
-  node_iam_role_use_name_prefix = false
-  node_iam_role_name            = module.eks.cluster_name
-
-  create_pod_identity_association = true
-
-  node_iam_role_additional_policies = {
-    AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  }
+  eks_admin_role_name              = "${local.cluster_name}-admin"
+  eks_admin_trusted_principal_arns = var.eks_admin_trusted_principal_arns
 
   tags = local.tags
 }
 
-# https://aws.amazon.com/blogs/containers/amazon-ebs-csi-driver-is-now-generally-available-in-amazon-eks-add-ons/
-data "aws_iam_policy" "ebs_csi_policy" {
-  arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+module "addons" {
+  source = "./modules/addons"
+
+  cluster_name                     = module.eks_cluster.cluster_name
+  ebs_csi_service_account_role_arn = module.iam.ebs_csi_iam_role_arn
+
+  depends_on = [module.iam]
 }
 
-module "irsa-ebs-csi" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
-  version = "5.60.0"
+module "autoscaler" {
+  source = "./modules/karpenter"
 
-  create_role                   = true
-  role_name                     = "AmazonEKSTFEBSCSIRole-${module.eks.cluster_name}"
-  provider_url                  = module.eks.oidc_provider
-  role_policy_arns              = [data.aws_iam_policy.ebs_csi_policy.arn]
-  oidc_fully_qualified_subjects = ["system:serviceaccount:kube-system:ebs-csi-controller-sa"]
-}
+  cluster_name       = module.eks_cluster.cluster_name
+  node_iam_role_name = module.eks_cluster.cluster_name
 
-resource "aws_eks_addon" "ebs_csi_driver" {
-  cluster_name             = module.eks.cluster_name
-  addon_name               = "aws-ebs-csi-driver"
-  service_account_role_arn = module.irsa-ebs-csi.iam_role_arn
+  tags = local.tags
 
-  resolve_conflicts_on_create = "OVERWRITE"
-  resolve_conflicts_on_update = "OVERWRITE"
-}
-
-resource "null_resource" "update_kubeconfig" {
-  depends_on = [module.eks]
-
-  provisioner "local-exec" {
-    command = "aws eks update-kubeconfig --region ${var.region} --name ${module.eks.cluster_name}"
-  }
+  depends_on = [module.eks_cluster]
 }

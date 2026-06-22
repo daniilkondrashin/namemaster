@@ -43,6 +43,21 @@ securityContext:
   # runAsNonRoot: true
   # runAsUser: 1000
 
+# Keep HPA-created replicas spread across nodes. The scheduler uses resource
+# requests, not live CPU usage, so this keeps replicas from concentrating on a
+# few nodes during load tests.
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: DoNotSchedule
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
 service:
   type: ClusterIP
   port: 80
@@ -96,10 +111,10 @@ resources:
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   limits:
-    cpu: 500m
-    memory: 256Mi
+    cpu: 750m
+    memory: 512Mi
   requests:
-    cpu: 100m
+    cpu: 250m
     memory: 256Mi
 
 # Enable pod autoscaling using HorizontalPodAutoscaler

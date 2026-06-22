@@ -6,7 +6,9 @@ gateway:
   annotations: {}
   labels: {}
   infrastructure:
-    annotations: {}
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+      service.beta.kubernetes.io/aws-load-balancer-attributes: load_balancing.cross_zone.enabled=true
     labels: {}
   listeners:
     - name: namemaster-http

@@ -109,6 +109,10 @@ The shared Gateway is owned by `deploy/helm/platform/gateway` and lives in the
 the script reads the cluster name, endpoint, Karpenter interruption queue, and
 node IAM role from Terraform outputs.
 
+The default `NodePool` consolidates empty or underutilized Karpenter-owned nodes
+after 10 minutes. Nodes without the `karpenter.sh/nodepool` label are EKS
+managed node group nodes and are not consolidated by Karpenter.
+
 Check node autoscaling:
 
 ```bash
@@ -124,6 +128,85 @@ helm template namemaster apps/namemaster/chart --namespace namemaster
 helm template kubernetes-monitor apps/monitoring/chart --namespace monitoring
 helm template namemaster-locust apps/locust/chart --namespace loadtest
 ```
+
+## Delete Kubernetes Resources and Cluster
+
+Delete Kubernetes resources before destroying Terraform infrastructure. This
+lets the in-cluster controllers remove cloud resources such as AWS load
+balancers, EBS volumes, and Karpenter nodes while the EKS cluster still exists.
+
+First, point `kubectl` at the cluster:
+
+```bash
+cd infra/terraform/k8s
+
+aws eks update-kubeconfig \
+  --region "$(terraform output -raw region)" \
+  --name "$(terraform output -raw cluster_name)" \
+  --role-arn "$(terraform output -raw eks_admin_role_arn)"
+```
+
+Uninstall application and data releases:
+
+```bash
+helm uninstall namemaster-locust --namespace loadtest --ignore-not-found
+helm uninstall kubernetes-monitor --namespace monitoring --ignore-not-found
+helm uninstall namemaster --namespace namemaster --ignore-not-found
+helm uninstall postgresql --namespace namemaster --ignore-not-found
+```
+
+Uninstall observability and platform releases:
+
+```bash
+helm uninstall prometheus --namespace monitoring --ignore-not-found
+helm uninstall metrics-server --namespace kube-system --ignore-not-found
+
+kubectl delete nodepool default --ignore-not-found
+kubectl delete nodeclaim --all --ignore-not-found
+kubectl wait --for=delete nodeclaim --all --timeout=10m || true
+helm uninstall karpenter --namespace kube-system --ignore-not-found
+
+helm uninstall shared-gateway --namespace nginx-gateway --ignore-not-found
+kubectl delete clusterissuer letsencrypt-prod --ignore-not-found
+helm uninstall cert-manager --namespace cert-manager --ignore-not-found
+helm uninstall ngf --namespace nginx-gateway --ignore-not-found
+```
+
+If you want to keep the cluster but remove all project namespaces, delete them
+after the releases are gone:
+
+```bash
+kubectl delete namespace \
+  loadtest \
+  monitoring \
+  namemaster \
+  cert-manager \
+  nginx-gateway \
+  gitlab-runner \
+  --ignore-not-found
+```
+
+Before deleting the cluster, check that Kubernetes no longer has public load
+balancers or persistent volumes that should be cleaned up first:
+
+```bash
+kubectl get svc -A --field-selector spec.type=LoadBalancer
+kubectl get pv,pvc -A
+kubectl get nodeclaim
+```
+
+Destroy the EKS cluster and AWS resources managed by the main Terraform stack:
+
+```bash
+cd infra/terraform/k8s
+terraform destroy
+```
+
+The remote-state backend in `infra/terraform/backend` is intentionally separate.
+Keep it if you plan to recreate the cluster. Delete it only when you are done
+with all Terraform state for this project; the S3 bucket has
+`prevent_destroy = true`, so removing the backend requires an explicit manual
+decision.
 
 ## Internal Load Test
 
@@ -183,6 +266,16 @@ terraform apply
 cd ../k8s
 terraform init -backend-config=backend.hcl -migrate-state
 terraform apply
+```
+
+The EKS cluster does not grant implicit cluster-admin access to the Terraform
+creator. Terraform creates a dedicated admin role instead:
+
+```bash
+aws eks update-kubeconfig \
+  --region "$(terraform output -raw region)" \
+  --name "$(terraform output -raw cluster_name)" \
+  --role-arn "$(terraform output -raw eks_admin_role_arn)"
 ```
 
 The old Terraform Helm stack was removed. Helm releases are now managed from
