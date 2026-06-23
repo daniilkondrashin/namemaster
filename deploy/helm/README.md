@@ -6,28 +6,35 @@ the cloud infrastructure/EKS layer.
 ## Order
 
 ```bash
-deploy/helm/scripts/00-namespaces.sh
-deploy/helm/scripts/01-crds.sh
-deploy/helm/scripts/02-platform.sh
-deploy/helm/scripts/03-capacity.sh
-deploy/helm/scripts/04-data.sh
-deploy/helm/scripts/05-observability.sh
-deploy/helm/scripts/06-apps.sh
+deploy/helm/scripts/00-capacity.sh
+deploy/helm/scripts/01-namespaces.sh
+deploy/helm/scripts/02-crds.sh
+deploy/helm/scripts/03-platform.sh
+deploy/helm/scripts/04-storage.sh
+deploy/helm/scripts/05-data.sh
+deploy/helm/scripts/06-observability.sh
+deploy/helm/scripts/07-apps.sh
 ```
 
-`03-capacity.sh` installs Karpenter into `kube-system` and applies the default
+`00-capacity.sh` installs Karpenter into `kube-system` and applies the default
 `NodePool` and `EC2NodeClass` from `deploy/helm/platform/karpenter`. Terraform
 must be applied first because this script reads Karpenter IAM and queue outputs
 from `infra/terraform/k8s`.
 
-`06-apps.sh` installs `namemaster`, the Kubernetes monitoring dashboard, and
+`04-storage.sh` installs the AWS EBS CSI EKS addon after Karpenter can launch EC2
+nodes, then applies the `gp3` StorageClass used by stateful workloads.
+
+`07-apps.sh` installs `namemaster`, the Kubernetes monitoring dashboard, and
 the internal Locust load generator.
 
 ## Node Autoscaling
 
-Terraform owns the AWS resources Karpenter needs: Pod Identity, controller IAM,
+Terraform owns the AWS resources Karpenter needs: the Fargate profile used to
+run the Karpenter controller during first start, controller IAM through IRSA,
 node IAM role, EKS access entry, interruption queue, and discovery tags on the
-private subnets and node security group.
+private subnets and node security group. Terraform also creates the IAM role
+used by the EBS CSI controller, but the EBS CSI addon is installed by
+`04-storage.sh` after Karpenter-managed EC2 nodes are available.
 
 Helm owns the Kubernetes side:
 
@@ -35,22 +42,29 @@ Helm owns the Kubernetes side:
 - `EC2NodeClass/default`
 - `NodePool/default`
 
-The default NodePool starts with on-demand Linux `amd64` capacity and a small
-cluster-wide limit. It consolidates empty or underutilized Karpenter-owned nodes
-after 10 minutes, which reduces waste without reacting immediately to short
-HPA/load-test bursts. Use Locust to create pending pods and watch Karpenter add
-nodes:
+The default NodePool starts on-demand Linux `amd64` capacity from non-burstable
+`c`, `m`, and `r` instance families. The zone list is rendered from Terraform's
+private subnet AZs, so Karpenter only launches in AZs that have discovery-tagged
+subnets. It consolidates empty or underutilized Karpenter-owned nodes after 5
+minutes, with weekday business-hour disruption budgets for underutilized nodes.
+Spot capacity is intentionally disabled for now. Use Locust to create pending
+pods and watch Karpenter add nodes:
 
 ```bash
+kubectl get pods -n kube-system -l workload=karpenter,runtime=fargate \
+  -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.metadata.labels.eks\.amazonaws\.com/fargate-profile}{"\n"}{end}'
 kubectl get nodepool,ec2nodeclass,nodeclaim
 kubectl logs -n kube-system deploy/karpenter -f
 kubectl get nodes -w
 ```
 
-Nodes without the `karpenter.sh/nodepool` label belong to the EKS managed node
-group, not Karpenter. Karpenter will not consolidate or replace those nodes.
-The managed node group keeps two baseline nodes; application pods may run there,
-and Karpenter creates additional nodes when pending pods need more capacity.
+Production Terraform does not keep an EKS managed node group. EC2 worker nodes
+should be Karpenter-owned and labelled with `karpenter.sh/nodepool`; nodes
+without that label are outside Karpenter's consolidation and replacement logic.
+For a brand-new empty cluster, `terraform apply` creates the Fargate profile
+that matches the Karpenter controller pods. `00-capacity.sh` installs Karpenter
+with IRSA on that Fargate runtime, then applies the `EC2NodeClass` and
+`NodePool` so application capacity is created as Karpenter-managed EC2 nodes.
 
 ## Gateway
 
@@ -93,6 +107,11 @@ helm uninstall postgresql --namespace namemaster --ignore-not-found
 
 helm uninstall prometheus --namespace monitoring --ignore-not-found
 helm uninstall metrics-server --namespace kube-system --ignore-not-found
+
+kubectl delete storageclass gp3 --ignore-not-found
+aws eks delete-addon \
+  --cluster-name "$(terraform -chdir=infra/terraform/k8s output -raw cluster_name)" \
+  --addon-name aws-ebs-csi-driver || true
 
 kubectl delete nodepool default --ignore-not-found
 kubectl delete nodeclaim --all --ignore-not-found

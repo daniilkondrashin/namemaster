@@ -26,13 +26,23 @@ output "public_subnet_ids_csv" {
   value       = join(",", module.network.public_subnets)
 }
 
+output "private_subnet_azs_csv" {
+  description = "Comma-separated availability zones used by private Karpenter subnets"
+  value       = join(",", module.network.azs)
+}
+
 output "eks_admin_role_arn" {
   description = "IAM role ARN with EKS cluster-admin access"
   value       = module.iam.eks_admin_role_arn
 }
 
+output "ebs_csi_iam_role_arn" {
+  description = "IAM role ARN used by the AWS EBS CSI driver service account"
+  value       = module.iam.ebs_csi_iam_role_arn
+}
+
 output "karpenter_controller_iam_role_arn" {
-  description = "IAM role ARN used by the Karpenter controller through EKS Pod Identity"
+  description = "IAM role ARN used by the Karpenter controller through IRSA"
   value       = module.autoscaler.controller_iam_role_arn
 }
 

@@ -1,0 +1,28 @@
+replicas: 2
+
+podLabels:
+  workload: karpenter
+  runtime: fargate
+
+serviceAccount:
+  create: true
+  name: karpenter
+  annotations:
+    eks.amazonaws.com/role-arn: "${KARPENTER_CONTROLLER_IAM_ROLE_ARN}"
+
+settings:
+  clusterName: "${CLUSTER_NAME}"
+  clusterEndpoint: "${CLUSTER_ENDPOINT}"
+  interruptionQueue: "${KARPENTER_QUEUE_NAME}"
+
+dnsPolicy: Default
+topologySpreadConstraints: []
+
+controller:
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1
+      memory: 1Gi

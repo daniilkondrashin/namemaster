@@ -25,6 +25,16 @@ variable "cluster_version" {
   default     = "1.36"
 }
 
+variable "cluster_endpoint_public_access_cidrs" {
+  description = "CIDR blocks allowed to reach the public EKS Kubernetes API endpoint. Pass this at apply time, for example [\"203.0.113.10/32\"]."
+  type        = list(string)
+
+  validation {
+    condition     = length(var.cluster_endpoint_public_access_cidrs) > 0 && alltrue([for cidr in var.cluster_endpoint_public_access_cidrs : can(cidrhost(cidr, 0))])
+    error_message = "Provide at least one valid IPv4 or IPv6 CIDR block, for example [\"203.0.113.10/32\"]."
+  }
+}
+
 variable "vpc_cidr" {
   description = "VPC CIDR block"
   type        = string

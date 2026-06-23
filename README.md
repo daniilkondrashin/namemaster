@@ -92,30 +92,45 @@ helm upgrade --install namemaster apps/namemaster/chart \
 Install platform add-ons and application charts with Helm:
 
 ```bash
-deploy/helm/scripts/00-namespaces.sh
-deploy/helm/scripts/01-crds.sh
-deploy/helm/scripts/02-platform.sh
-deploy/helm/scripts/03-capacity.sh
-deploy/helm/scripts/04-data.sh
-deploy/helm/scripts/05-observability.sh
-deploy/helm/scripts/06-apps.sh
+deploy/helm/scripts/00-capacity.sh
+deploy/helm/scripts/01-namespaces.sh
+deploy/helm/scripts/02-crds.sh
+deploy/helm/scripts/03-platform.sh
+deploy/helm/scripts/04-storage.sh
+deploy/helm/scripts/05-data.sh
+deploy/helm/scripts/06-observability.sh
+deploy/helm/scripts/07-apps.sh
 ```
 
 The shared Gateway is owned by `deploy/helm/platform/gateway` and lives in the
 `nginx-gateway` namespace. Application charts create only `HTTPRoute` resources.
 
-`03-capacity.sh` installs Karpenter and applies the default `NodePool` and
+`00-capacity.sh` installs Karpenter and applies the default `NodePool` and
 `EC2NodeClass`. Run `terraform apply` in `infra/terraform/k8s` first because
-the script reads the cluster name, endpoint, Karpenter interruption queue, and
-node IAM role from Terraform outputs.
+the script reads the cluster name, endpoint, Karpenter controller IAM role,
+Karpenter interruption queue, node IAM role, and private subnet AZs from
+Terraform outputs.
 
-The default `NodePool` consolidates empty or underutilized Karpenter-owned nodes
-after 10 minutes. Nodes without the `karpenter.sh/nodepool` label are EKS
-managed node group nodes and are not consolidated by Karpenter.
+`04-storage.sh` installs the AWS EBS CSI EKS addon after Karpenter can launch
+EC2 nodes, then applies the `gp3` StorageClass used by PostgreSQL and
+Prometheus PVCs.
+
+The default `NodePool` creates on-demand Linux `amd64` nodes from non-burstable
+`c`, `m`, and `r` instance families. It avoids `t*` instances so HPA/load-test
+CPU metrics are not skewed by burst credits, limits total Karpenter capacity,
+and consolidates empty or underutilized nodes after 5 minutes.
+
+Production Terraform does not keep an EKS managed node group; EC2 worker nodes
+are expected to be Karpenter-owned and labelled with `karpenter.sh/nodepool`.
+For a brand-new empty cluster, Terraform creates a Fargate profile for the
+Karpenter controller pods. `00-capacity.sh` installs Karpenter with IRSA on that
+Fargate runtime, and the `NodePool` then creates the EC2 worker nodes.
 
 Check node autoscaling:
 
 ```bash
+kubectl get pods -n kube-system -l workload=karpenter,runtime=fargate \
+  -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.metadata.labels.eks\.amazonaws\.com/fargate-profile}{"\n"}{end}'
 kubectl get nodepool,ec2nodeclass,nodeclaim
 kubectl logs -n kube-system deploy/karpenter -f
 kubectl get nodes -w
@@ -160,6 +175,11 @@ Uninstall observability and platform releases:
 ```bash
 helm uninstall prometheus --namespace monitoring --ignore-not-found
 helm uninstall metrics-server --namespace kube-system --ignore-not-found
+
+kubectl delete storageclass gp3 --ignore-not-found
+aws eks delete-addon \
+  --cluster-name "$(terraform output -raw cluster_name)" \
+  --addon-name aws-ebs-csi-driver || true
 
 kubectl delete nodepool default --ignore-not-found
 kubectl delete nodeclaim --all --ignore-not-found
@@ -266,6 +286,21 @@ terraform apply
 cd ../k8s
 terraform init -backend-config=backend.hcl -migrate-state
 terraform apply
+```
+
+The public EKS API endpoint is restricted by CIDR. Do not commit your personal
+IP address to the repository; pass it directly when applying Terraform:
+
+```bash
+terraform apply \
+  -var='cluster_endpoint_public_access_cidrs=["203.0.113.10/32"]'
+```
+
+Or derive the current public IP for a single shell session:
+
+```bash
+MY_IP="$(curl -fsS https://checkip.amazonaws.com | tr -d '\n')"
+TF_VAR_cluster_endpoint_public_access_cidrs="[\"${MY_IP}/32\"]" terraform apply
 ```
 
 The EKS cluster does not grant implicit cluster-admin access to the Terraform

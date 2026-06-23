@@ -1,5 +1,5 @@
 output "controller_iam_role_arn" {
-  description = "IAM role ARN used by the Karpenter controller through EKS Pod Identity"
+  description = "IAM role ARN used by the Karpenter controller through IRSA"
   value       = module.karpenter.iam_role_arn
 }
 

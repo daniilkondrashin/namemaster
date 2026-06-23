@@ -5,8 +5,8 @@ provider "aws" {
   region = var.region
 }
 
-# Filter out local zones, which are not currently supported
-# with managed node groups.
+# Filter out local zones so VPC subnets and the rendered Karpenter NodePool use
+# regional availability zones only.
 data "aws_availability_zones" "available" {
   filter {
     name   = "opt-in-status"
@@ -48,6 +48,8 @@ module "eks_cluster" {
   cluster_name    = local.cluster_name
   cluster_version = var.cluster_version
 
+  cluster_endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs
+
   vpc_id     = module.network.vpc_id
   subnet_ids = module.network.private_subnets
 
@@ -67,20 +69,12 @@ module "iam" {
   tags = local.tags
 }
 
-module "addons" {
-  source = "./modules/addons"
-
-  cluster_name                     = module.eks_cluster.cluster_name
-  ebs_csi_service_account_role_arn = module.iam.ebs_csi_iam_role_arn
-
-  depends_on = [module.iam]
-}
-
 module "autoscaler" {
   source = "./modules/karpenter"
 
-  cluster_name       = module.eks_cluster.cluster_name
-  node_iam_role_name = module.eks_cluster.cluster_name
+  cluster_name           = module.eks_cluster.cluster_name
+  node_iam_role_name     = module.eks_cluster.cluster_name
+  irsa_oidc_provider_arn = module.eks_cluster.oidc_provider_arn
 
   tags = local.tags
 

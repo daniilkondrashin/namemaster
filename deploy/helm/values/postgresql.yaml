@@ -4,4 +4,4 @@ auth:
 
 primary:
   persistence:
-    storageClass: gp2
+    storageClass: gp3

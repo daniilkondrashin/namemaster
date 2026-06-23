@@ -12,3 +12,8 @@ output "public_subnets" {
   description = "Public subnet IDs"
   value       = module.vpc.public_subnets
 }
+
+output "azs" {
+  description = "Availability zones used by the VPC subnets"
+  value       = module.vpc.azs
+}
