@@ -27,6 +27,7 @@ locust:
 
 loadJob:
   enabled: false
+  runId: ""
   users: 300
   spawnRate: 30
   runTime: 10m

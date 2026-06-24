@@ -72,12 +72,23 @@ with IRSA on that Fargate runtime, then applies the `EC2NodeClass` and
 `nginx-gateway` namespace. Application charts should create `HTTPRoute` resources
 that attach to this Gateway instead of creating their own Gateway.
 
-Current listeners:
+Default listeners:
 
-- `namemaster-http` for `namemaster.opsbox.org:80`
-- `namemaster-https` for `namemaster.opsbox.org:443`
-- `monitoring-http` for `monitoring.opsbox.org:80`
-- `monitoring-https` for `monitoring.opsbox.org:443`
+- `namemaster-http` for `namemaster.<domain>:80`
+- `namemaster-https` for `namemaster.<domain>:443`
+- `monitoring-http` for `monitoring.<domain>:80`
+- `monitoring-https` for `monitoring.<domain>:443`
+
+The default domain is `opsbox.org`. To move the stack to your own domain, run
+the platform and app scripts with the same value:
+
+```bash
+PUBLIC_DOMAIN=example.com deploy/helm/scripts/03-platform.sh
+PUBLIC_DOMAIN=example.com deploy/helm/scripts/07-apps.sh
+```
+
+The same value can be passed manually with `--set-string global.domain=example.com`
+to the `shared-gateway`, `namemaster`, and `kubernetes-monitor` chart releases.
 
 TLS certificates are kept in the same namespace as the Gateway because Gateway
 TLS termination references Kubernetes Secrets from the Gateway namespace.

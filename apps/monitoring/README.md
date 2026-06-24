@@ -174,7 +174,7 @@ If the shared Gateway only allows routes from its own namespace, update `Gateway
 `deploy/helm/platform/gateway` creates the TLS secret in the Helm flow:
 
 ```text
-monitoring-opsbox-org-tls
+monitoring-tls
 ```
 
 For Gateway API TLS termination, keep the `Certificate` and its resulting Secret in the same namespace as the Gateway. The shared Gateway in `nginx-gateway` references that Secret:
@@ -182,14 +182,14 @@ For Gateway API TLS termination, keep the `Certificate` and its resulting Secret
 ```yaml
 listeners:
   - name: monitoring-https
-    hostname: monitoring.opsbox.org
+    hostname: monitoring.<domain>
     port: 443
     protocol: HTTPS
     tls:
       mode: Terminate
       certificateRefs:
         - kind: Secret
-          name: monitoring-opsbox-org-tls
+          name: monitoring-tls
 ```
 
 Do not put the TLS secret in `HTTPRoute`; `HTTPRoute` only routes traffic.
@@ -199,7 +199,7 @@ Do not put the TLS secret in `HTTPRoute`; `HTTPRoute` only routes traffic.
 Create a DNS record for:
 
 ```text
-monitoring.opsbox.org
+monitoring.<domain>
 ```
 
 Point it at the external address of the shared Gateway or load balancer used by NGINX Gateway Fabric.
@@ -247,4 +247,4 @@ Exported metrics include:
 - Dashboard shows metrics errors: verify `metrics-server` with `kubectl top nodes` and `kubectl top pods -A`.
 - `namemaster` pods are empty: verify labels with `kubectl get pods -A -l app.kubernetes.io/name=namemaster` and adjust `MONITORED_POD_SELECTOR` if your release uses different labels.
 - `HTTPRoute` is not accepted: verify the `parentRefs` Gateway name/namespace and Gateway `allowedRoutes`.
-- HTTPS is not ready: check `kubectl describe certificate -n nginx-gateway monitoring-opsbox-org` and verify the Gateway listener references `monitoring-opsbox-org-tls`.
+- HTTPS is not ready: check `kubectl describe certificate -n nginx-gateway monitoring` and verify the Gateway listener references `monitoring-tls`.

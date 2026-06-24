@@ -44,6 +44,8 @@ trap 'rm -f "${KARPENTER_VALUES_FILE}"' EXIT
 
 envsubst < "${ROOT_DIR}/deploy/helm/platform/karpenter/values.yaml" > "${KARPENTER_VALUES_FILE}"
 
+# public.ecr.aws expects anonymous pulls; an expired token from a prior
+# `aws ecr-public get-login-password` session breaks the pull. Force logout.
 helm registry logout public.ecr.aws >/dev/null 2>&1 || true
 
 helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \

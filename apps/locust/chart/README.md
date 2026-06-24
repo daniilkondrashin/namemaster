@@ -9,7 +9,7 @@ http://namemaster.namemaster.svc.cluster.local
 ```
 
 This keeps load-test traffic inside the cluster and avoids the public
-`namemaster.opsbox.org` path through Cloudflare and AWS public ingress.
+ingress path through Cloudflare and AWS public ingress.
 
 ## Install
 
@@ -65,7 +65,6 @@ helm upgrade --install namemaster apps/namemaster/chart \
 
 helm upgrade --install namemaster-locust apps/locust/chart \
   --namespace loadtest \
-  --reuse-values \
   --set loadTest.mode=cpu \
   --set loadTest.existingSecret.name=namemaster-load-test \
   --set loadTest.cpuDurationMs=50
@@ -98,6 +97,7 @@ helm upgrade --install namemaster-locust apps/locust/chart \
   --namespace loadtest \
   --create-namespace \
   --set loadJob.enabled=true \
+  --set loadJob.runId="$(date +%Y%m%d-%H%M%S)" \
   --set loadJob.users=300 \
   --set loadJob.spawnRate=30 \
   --set loadJob.runTime=10m

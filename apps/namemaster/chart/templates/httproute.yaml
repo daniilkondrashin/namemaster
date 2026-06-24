@@ -10,6 +10,7 @@
 {{- end -}}
 {{- end -}}
 {{- $redirectSectionName := default "http" .Values.gateway.route.redirectSectionName -}}
+{{- $hostname := include "namemaster.hostname" . -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -23,10 +24,8 @@ spec:
       namespace: {{ . | quote }}
       {{- end }}
       sectionName: {{ $sectionName | quote }}
-  {{- with .Values.gateway.hostname }}
   hostnames:
-    - {{ . | quote }}
-  {{- end }}
+    - {{ $hostname | quote }}
   rules:
     - matches:
         {{- range .Values.gateway.route.paths }}
@@ -52,10 +51,8 @@ spec:
       namespace: {{ . | quote }}
       {{- end }}
       sectionName: {{ $redirectSectionName | quote }}
-  {{- with .Values.gateway.hostname }}
   hostnames:
-    - {{ . | quote }}
-  {{- end }}
+    - {{ $hostname | quote }}
   rules:
     - matches:
         {{- range .Values.gateway.route.paths }}

@@ -146,87 +146,9 @@ helm template namemaster-locust apps/locust/chart --namespace loadtest
 
 ## Delete Kubernetes Resources and Cluster
 
-Delete Kubernetes resources before destroying Terraform infrastructure. This
-lets the in-cluster controllers remove cloud resources such as AWS load
-balancers, EBS volumes, and Karpenter nodes while the EKS cluster still exists.
-
-First, point `kubectl` at the cluster:
-
-```bash
-cd infra/terraform/k8s
-
-aws eks update-kubeconfig \
-  --region "$(terraform output -raw region)" \
-  --name "$(terraform output -raw cluster_name)" \
-  --role-arn "$(terraform output -raw eks_admin_role_arn)"
-```
-
-Uninstall application and data releases:
-
-```bash
-helm uninstall namemaster-locust --namespace loadtest --ignore-not-found
-helm uninstall kubernetes-monitor --namespace monitoring --ignore-not-found
-helm uninstall namemaster --namespace namemaster --ignore-not-found
-helm uninstall postgresql --namespace namemaster --ignore-not-found
-```
-
-Uninstall observability and platform releases:
-
-```bash
-helm uninstall prometheus --namespace monitoring --ignore-not-found
-helm uninstall metrics-server --namespace kube-system --ignore-not-found
-
-kubectl delete storageclass gp3 --ignore-not-found
-aws eks delete-addon \
-  --cluster-name "$(terraform output -raw cluster_name)" \
-  --addon-name aws-ebs-csi-driver || true
-
-kubectl delete nodepool default --ignore-not-found
-kubectl delete nodeclaim --all --ignore-not-found
-kubectl wait --for=delete nodeclaim --all --timeout=10m || true
-helm uninstall karpenter --namespace kube-system --ignore-not-found
-
-helm uninstall shared-gateway --namespace nginx-gateway --ignore-not-found
-kubectl delete clusterissuer letsencrypt-prod --ignore-not-found
-helm uninstall cert-manager --namespace cert-manager --ignore-not-found
-helm uninstall ngf --namespace nginx-gateway --ignore-not-found
-```
-
-If you want to keep the cluster but remove all project namespaces, delete them
-after the releases are gone:
-
-```bash
-kubectl delete namespace \
-  loadtest \
-  monitoring \
-  namemaster \
-  cert-manager \
-  nginx-gateway \
-  gitlab-runner \
-  --ignore-not-found
-```
-
-Before deleting the cluster, check that Kubernetes no longer has public load
-balancers or persistent volumes that should be cleaned up first:
-
-```bash
-kubectl get svc -A --field-selector spec.type=LoadBalancer
-kubectl get pv,pvc -A
-kubectl get nodeclaim
-```
-
-Destroy the EKS cluster and AWS resources managed by the main Terraform stack:
-
-```bash
-cd infra/terraform/k8s
-terraform destroy
-```
-
-The remote-state backend in `infra/terraform/backend` is intentionally separate.
-Keep it if you plan to recreate the cluster. Delete it only when you are done
-with all Terraform state for this project; the S3 bucket has
-`prevent_destroy = true`, so removing the backend requires an explicit manual
-decision.
+See [deploy/helm/README.md#delete-resources](deploy/helm/README.md#delete-resources)
+for the in-cluster teardown order, then run `terraform destroy` in
+`infra/terraform/k8s`.
 
 ## Internal Load Test
 
@@ -312,6 +234,12 @@ aws eks update-kubeconfig \
   --name "$(terraform output -raw cluster_name)" \
   --role-arn "$(terraform output -raw eks_admin_role_arn)"
 ```
+
+The VPC intentionally uses a single NAT Gateway as a non-prod cost trade-off:
+roughly $32/month instead of about $96/month for one NAT per AZ. This accepts
+AZ-outage exposure for internet egress from private subnets. For production,
+set `single_nat_gateway = false` and `one_nat_gateway_per_az = true` in
+`infra/terraform/k8s/modules/network/main.tf`.
 
 The old Terraform Helm stack was removed. Helm releases are now managed from
 `deploy/helm`.

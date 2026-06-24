@@ -1,4 +1,19 @@
-{{- if .Values.autoscaling.enabled }}
+{{- $autoscaling := .Values.autoscaling | default dict }}
+{{- $autoscalingEnabled := true }}
+{{- if hasKey $autoscaling "enabled" }}
+{{- $autoscalingEnabled = $autoscaling.enabled }}
+{{- end }}
+{{- $targetCPU := 70 }}
+{{- if hasKey $autoscaling "targetCPUUtilizationPercentage" }}
+{{- $targetCPU = $autoscaling.targetCPUUtilizationPercentage }}
+{{- end }}
+{{- $targetMemory := $autoscaling.targetMemoryUtilizationPercentage }}
+{{- $defaultBehavior := dict "scaleUp" (dict "stabilizationWindowSeconds" 0 "policies" (list (dict "type" "Percent" "value" 100 "periodSeconds" 30) (dict "type" "Pods" "value" 4 "periodSeconds" 30)) "selectPolicy" "Max") "scaleDown" (dict "stabilizationWindowSeconds" 300 "policies" (list (dict "type" "Percent" "value" 50 "periodSeconds" 60) (dict "type" "Pods" "value" 2 "periodSeconds" 60)) "selectPolicy" "Min") }}
+{{- $behavior := $defaultBehavior }}
+{{- if hasKey $autoscaling "behavior" }}
+{{- $behavior = $autoscaling.behavior }}
+{{- end }}
+{{- if $autoscalingEnabled }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -10,23 +25,27 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: {{ include "namemaster.fullname" . }}
-  minReplicas: {{ .Values.autoscaling.minReplicas }}
-  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  minReplicas: {{ default 2 $autoscaling.minReplicas }}
+  maxReplicas: {{ default 20 $autoscaling.maxReplicas }}
   metrics:
-    {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
+    {{- if $targetCPU }}
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
+          averageUtilization: {{ $targetCPU }}
     {{- end }}
-    {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- if $targetMemory }}
     - type: Resource
       resource:
         name: memory
         target:
           type: Utilization
-          averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
+          averageUtilization: {{ $targetMemory }}
     {{- end }}
+  {{- with $behavior }}
+  behavior:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 {{- end }}

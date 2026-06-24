@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 TERRAFORM_DIR="${ROOT_DIR}/infra/terraform/k8s"
 NGINX_GATEWAY_FABRIC_VERSION="${NGINX_GATEWAY_FABRIC_VERSION:-2.6.5}"
+PUBLIC_DOMAIN="${PUBLIC_DOMAIN:-opsbox.org}"
 
 terraform_output() {
   terraform -chdir="${TERRAFORM_DIR}" output -raw "$1"
@@ -35,4 +36,5 @@ kubectl apply -f "${ROOT_DIR}/deploy/helm/manifests/cluster-issuer.yaml"
 helm upgrade --install shared-gateway "${ROOT_DIR}/deploy/helm/platform/gateway" \
   --namespace nginx-gateway \
   --create-namespace \
+  --set-string "global.domain=${PUBLIC_DOMAIN}" \
   --set-string "gateway.infrastructure.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-subnets=${HELM_PUBLIC_SUBNET_IDS}"

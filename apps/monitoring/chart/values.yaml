@@ -1,6 +1,9 @@
 nameOverride: ""
 fullnameOverride: ""
 
+global:
+  domain: opsbox.org
+
 replicaCount: 1
 
 image:
@@ -67,8 +70,8 @@ probes:
 gateway:
   httpRoute:
     enabled: true
-    hostnames:
-      - monitoring.opsbox.org
+    # Defaults to monitoring.<global.domain>.
+    hostnames: []
     parentRefs:
       - name: public
         namespace: nginx-gateway
@@ -85,11 +88,11 @@ gateway:
 
 certificate:
   enabled: false
-  name: monitoring-opsbox-org
+  name: monitoring
   namespace: nginx-gateway
-  secretName: monitoring-opsbox-org-tls
-  dnsNames:
-    - monitoring.opsbox.org
+  secretName: monitoring-tls
+  # Defaults to monitoring.<global.domain>.
+  dnsNames: []
   issuerRef:
     kind: ClusterIssuer
     name: letsencrypt-prod

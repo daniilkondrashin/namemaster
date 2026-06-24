@@ -2,28 +2,40 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: nginx-gateway
+  labels:
+    kubernetes.io/metadata.name: nginx-gateway
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: namemaster
+  labels:
+    kubernetes.io/metadata.name: namemaster
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: cert-manager
+  labels:
+    kubernetes.io/metadata.name: cert-manager
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: gitlab-runner
+  labels:
+    kubernetes.io/metadata.name: gitlab-runner
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: monitoring
+  labels:
+    kubernetes.io/metadata.name: monitoring
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: loadtest
+  labels:
+    kubernetes.io/metadata.name: loadtest

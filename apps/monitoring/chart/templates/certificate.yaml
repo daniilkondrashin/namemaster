@@ -1,4 +1,11 @@
 {{- if .Values.certificate.enabled }}
+{{- $dnsNames := .Values.certificate.dnsNames }}
+{{- if not $dnsNames }}
+{{- $dnsNames = .Values.gateway.httpRoute.hostnames }}
+{{- end }}
+{{- if not $dnsNames }}
+{{- $dnsNames = list (include "kubernetes-monitor.hostname" .) }}
+{{- end }}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -9,7 +16,7 @@ metadata:
 spec:
   secretName: {{ .Values.certificate.secretName }}
   dnsNames:
-    {{- toYaml .Values.certificate.dnsNames | nindent 4 }}
+    {{- toYaml $dnsNames | nindent 4 }}
   issuerRef:
     kind: {{ .Values.certificate.issuerRef.kind }}
     name: {{ .Values.certificate.issuerRef.name }}

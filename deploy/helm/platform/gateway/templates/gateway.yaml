@@ -28,5 +28,18 @@ spec:
     {{- end }}
   {{- end }}
   listeners:
-    {{- toYaml .Values.gateway.listeners | nindent 4 }}
+    {{- range .Values.gateway.listeners }}
+    - name: {{ .name }}
+      hostname: {{ include "shared-gateway.hostname" (dict "root" $ "key" .hostnameKey "value" .hostname) | quote }}
+      port: {{ .port }}
+      protocol: {{ .protocol }}
+      {{- with .tls }}
+      tls:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .allowedRoutes }}
+      allowedRoutes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- end }}
 {{- end }}

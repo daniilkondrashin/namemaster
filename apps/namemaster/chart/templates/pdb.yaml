@@ -1,0 +1,22 @@
+{{- $pdb := .Values.pdb | default dict }}
+{{- $pdbEnabled := true }}
+{{- if hasKey $pdb "enabled" }}
+{{- $pdbEnabled = $pdb.enabled }}
+{{- end }}
+{{- if $pdbEnabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "namemaster.fullname" . }}
+  labels:
+    {{- include "namemaster.labels" . | nindent 4 }}
+spec:
+  {{- if $pdb.minAvailable }}
+  minAvailable: {{ $pdb.minAvailable }}
+  {{- else }}
+  maxUnavailable: {{ default "25%" $pdb.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "namemaster.selectorLabels" . | nindent 6 }}
+{{- end }}

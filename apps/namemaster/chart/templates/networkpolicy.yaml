@@ -1,0 +1,61 @@
+{{- $networkPolicy := .Values.networkPolicy | default dict }}
+{{- $networkPolicyEnabled := true }}
+{{- if hasKey $networkPolicy "enabled" }}
+{{- $networkPolicyEnabled = $networkPolicy.enabled }}
+{{- end }}
+{{- if $networkPolicyEnabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "namemaster.fullname" . }}
+  labels:
+    {{- include "namemaster.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "namemaster.selectorLabels" . | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: nginx-gateway
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nginx-gateway-fabric
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: nginx-gateway
+          podSelector:
+            matchLabels:
+              gateway.networking.k8s.io/gateway-name: {{ .Values.gateway.name | quote }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: loadtest
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: namemaster-locust
+      ports:
+        - protocol: TCP
+          port: {{ .Values.app.containerPort }}
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+{{- end }}

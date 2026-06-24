@@ -15,7 +15,7 @@ app = Flask(__name__)
 # PostgreSQL database connection parameters
 app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{os.environ['postgresql-username']}:{os.environ['postgresql-password']}@{os.environ['postgresql-host']}:{os.environ['postgresql-port']}/{os.environ['postgresql-database']}"
 # The secret key for FlaskForm operation
-app.config['SECRET_KEY'] = {os.environ['namemaster-secretkey']}  
+app.config['SECRET_KEY'] = os.environ['namemaster-secretkey']
 db = SQLAlchemy(app)
 
 # Passing the text from input to the class="form" field

@@ -5,6 +5,15 @@
 {{- $namemasterSecretKeySecretKey := default "namemaster-secretkey" .Values.namemaster.secretKey.existingSecret.key -}}
 {{- $loadTestSecretName := default $secretName .Values.loadTest.existingSecret.name -}}
 {{- $loadTestTokenKey := default "load-test-token" .Values.loadTest.existingSecret.tokenKey -}}
+{{- $probes := .Values.probes | default dict -}}
+{{- $startupProbe := $probes.startup | default dict -}}
+{{- $livenessProbe := $probes.liveness | default dict -}}
+{{- $readinessProbe := $probes.readiness | default dict -}}
+{{- $autoscaling := .Values.autoscaling | default dict -}}
+{{- $autoscalingEnabled := true -}}
+{{- if hasKey $autoscaling "enabled" -}}
+{{- $autoscalingEnabled = $autoscaling.enabled -}}
+{{- end -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,7 +21,7 @@ metadata:
   labels:
     {{- include "namemaster.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
+  {{- if not $autoscalingEnabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
@@ -103,24 +112,38 @@ spec:
                   name: {{ $loadTestSecretName }}
                   key: {{ $loadTestTokenKey }}
             {{- end }}
+          startupProbe:
+            httpGet:
+              path: {{ default "/healthz" $startupProbe.path | quote }}
+              port: {{ .Values.app.containerPort }}
+            initialDelaySeconds: {{ default 0 $startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ default 5 $startupProbe.periodSeconds }}
+            timeoutSeconds: {{ default 3 $startupProbe.timeoutSeconds }}
+            failureThreshold: {{ default 30 $startupProbe.failureThreshold }}
           livenessProbe:
             httpGet:
-              path: {{ .Values.probes.liveness.path | quote }}
+              path: {{ default "/healthz" $livenessProbe.path | quote }}
               port: {{ .Values.app.containerPort }}
-            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
-            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
-            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
-            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+            initialDelaySeconds: {{ default 10 $livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ default 10 $livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ default 3 $livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ default 3 $livenessProbe.failureThreshold }}
           readinessProbe:
             httpGet:
-              path: {{ .Values.probes.readiness.path | quote }}
+              path: {{ default "/healthz" $readinessProbe.path | quote }}
               port: {{ .Values.app.containerPort }}
-            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
-            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
-            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
-            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+            initialDelaySeconds: {{ default 3 $readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ default 5 $readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ default 2 $readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ default 3 $readinessProbe.failureThreshold }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

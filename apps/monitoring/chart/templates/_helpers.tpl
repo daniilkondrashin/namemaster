@@ -28,6 +28,11 @@ app.kubernetes.io/name: {{ include "kubernetes-monitor.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
+{{- define "kubernetes-monitor.hostname" -}}
+{{- $global := .Values.global | default dict -}}
+{{- printf "monitoring.%s" (default "opsbox.org" $global.domain) -}}
+{{- end -}}
+
 {{- define "kubernetes-monitor.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
 {{- default (include "kubernetes-monitor.fullname" .) .Values.serviceAccount.name -}}

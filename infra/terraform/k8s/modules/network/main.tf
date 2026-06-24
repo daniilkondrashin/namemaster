@@ -10,7 +10,10 @@ module "vpc" {
   private_subnets = var.private_subnets
   public_subnets  = var.public_subnets
 
-  enable_nat_gateway   = true
+  enable_nat_gateway = true
+  # Cost trade-off: single NAT is roughly $32/mo instead of about $96/mo for 3 NATs.
+  # AZ-outage exposure is accepted for non-prod. For prod, set single_nat_gateway
+  # to false and one_nat_gateway_per_az to true.
   single_nat_gateway   = true
   enable_dns_hostnames = true
 

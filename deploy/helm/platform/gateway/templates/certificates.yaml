@@ -1,5 +1,9 @@
 {{- range .Values.certificates }}
 {{- if .enabled }}
+{{- $dnsNames := .dnsNames }}
+{{- if not $dnsNames }}
+{{- $dnsNames = list (include "shared-gateway.hostname" (dict "root" $ "key" .hostnameKey "value" .hostname)) }}
+{{- end }}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -12,7 +16,7 @@ metadata:
 spec:
   secretName: {{ .secretName }}
   dnsNames:
-    {{- toYaml .dnsNames | nindent 4 }}
+    {{- toYaml $dnsNames | nindent 4 }}
   issuerRef:
     kind: {{ .issuerRef.kind }}
     name: {{ .issuerRef.name }}

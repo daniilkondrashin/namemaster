@@ -1,10 +1,11 @@
 {{- if .Values.loadJob.enabled }}
 {{- $loadTestSecretName := default (include "namemaster-locust.fullname" .) .Values.loadTest.existingSecret.name }}
 {{- $loadTestTokenKey := default "load-test-token" .Values.loadTest.existingSecret.tokenKey }}
+{{- $runId := .Values.loadJob.runId | default (now | date "20060102-150405") }}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "namemaster-locust.fullname" . }}-run-{{ .Release.Revision }}
+  name: {{ include "namemaster-locust.fullname" . }}-run-{{ $runId }}
   labels:
     {{- include "namemaster-locust.labels" . | nindent 4 }}
     app.kubernetes.io/component: load-job

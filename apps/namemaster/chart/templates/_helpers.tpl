@@ -51,6 +51,20 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
+Default public hostname for the app.
+*/}}
+{{- define "namemaster.hostname" -}}
+{{- $gateway := .Values.gateway | default dict -}}
+{{- $hostname := $gateway.hostname | default "" -}}
+{{- if $hostname -}}
+{{- $hostname -}}
+{{- else -}}
+{{- $global := .Values.global | default dict -}}
+{{- printf "namemaster.%s" (default "opsbox.org" $global.domain) -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 Create the name of the service account to use
 */}}
 {{- define "namemaster.serviceAccountName" -}}
