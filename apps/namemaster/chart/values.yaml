@@ -21,17 +21,6 @@ app:
 gunicorn:
   args: "--workers=3 --threads=2 --timeout=60"
 
-
-# Creates a ServiceAccount for the ability to install and modify resources in namespace: namemaster using gitlab runner.
-# The token is written to the secret "namemaster-serviceaccount-secret".
-
-rbac:
-  create: false
-  serviceaccount:
-    name: namemaster-serviceaccount
-    annotations: {}
-    namesecret: namemaster-serviceaccount-secret
-
 podAnnotations: {}
 podLabels: {}
 
@@ -119,7 +108,7 @@ resources:
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   limits:
-    cpu: 750m
+    cpu: 500m
     memory: 512Mi
   requests:
     cpu: 250m

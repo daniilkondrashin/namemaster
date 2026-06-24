@@ -106,7 +106,7 @@ the cluster network.
 ## Delete Resources
 
 Remove resources in reverse dependency order: applications first, then data and
-observability, then autoscaling and gateway components. Run this before
+observability, then gateway components and autoscaling. Run this before
 `terraform destroy` so Kubernetes controllers can clean up AWS load balancers,
 volumes, and Karpenter-managed nodes.
 
@@ -119,6 +119,32 @@ helm uninstall postgresql --namespace namemaster --ignore-not-found
 helm uninstall prometheus --namespace monitoring --ignore-not-found
 helm uninstall metrics-server --namespace kube-system --ignore-not-found
 
+helm uninstall shared-gateway --namespace nginx-gateway --ignore-not-found
+kubectl wait \
+  --for=delete service \
+  --namespace nginx-gateway \
+  --selector=gateway.networking.k8s.io/gateway-name=public \
+  --timeout=10m || true
+kubectl delete clusterissuer letsencrypt-prod --ignore-not-found
+helm uninstall cert-manager --namespace cert-manager --ignore-not-found
+helm uninstall ngf --namespace nginx-gateway --ignore-not-found
+
+kubectl delete namespace \
+  loadtest \
+  monitoring \
+  namemaster \
+  cert-manager \
+  nginx-gateway \
+  --ignore-not-found
+kubectl wait \
+  --for=delete namespace \
+  loadtest \
+  monitoring \
+  namemaster \
+  cert-manager \
+  nginx-gateway \
+  --timeout=10m || true
+
 kubectl delete storageclass gp3 --ignore-not-found
 aws eks delete-addon \
   --cluster-name "$(terraform -chdir=infra/terraform/k8s output -raw cluster_name)" \
@@ -127,25 +153,17 @@ aws eks delete-addon \
 kubectl delete nodepool default --ignore-not-found
 kubectl delete nodeclaim --all --ignore-not-found
 kubectl wait --for=delete nodeclaim --all --timeout=10m || true
+kubectl wait --for=delete node --selector=karpenter.sh/nodepool=default --timeout=10m || true
 helm uninstall karpenter --namespace kube-system --ignore-not-found
-
-helm uninstall shared-gateway --namespace nginx-gateway --ignore-not-found
-kubectl delete clusterissuer letsencrypt-prod --ignore-not-found
-helm uninstall cert-manager --namespace cert-manager --ignore-not-found
-helm uninstall ngf --namespace nginx-gateway --ignore-not-found
 ```
 
-Delete project namespaces only after the Helm releases are gone:
+Delete project namespaces while the EBS CSI addon and Karpenter nodes are still
+running, so Kubernetes can detach and delete dynamically provisioned EBS volumes.
+If a namespace stays in `Terminating`, inspect its finalizers before continuing.
 
 ```bash
-kubectl delete namespace \
-  loadtest \
-  monitoring \
-  namemaster \
-  cert-manager \
-  nginx-gateway \
-  gitlab-runner \
-  --ignore-not-found
+kubectl get namespace
+kubectl get pv,pvc -A
 ```
 
 Check for leftovers before destroying the EKS cluster:
@@ -154,6 +172,48 @@ Check for leftovers before destroying the EKS cluster:
 kubectl get svc -A --field-selector spec.type=LoadBalancer
 kubectl get pv,pvc -A
 kubectl get nodeclaim
+```
+
+If `terraform destroy` fails with `DependencyViolation` while deleting a subnet
+or the EKS node security group, look for AWS-owned Kubernetes ENIs that
+Terraform does not track:
+
+```bash
+REGION="$(terraform -chdir=infra/terraform/k8s output -raw region)"
+CLUSTER_NAME="$(terraform -chdir=infra/terraform/k8s output -raw cluster_name)"
+
+aws ec2 describe-network-interfaces \
+  --region "${REGION}" \
+  --filters "Name=tag:cluster.k8s.amazonaws.com/name,Values=${CLUSTER_NAME}" \
+  --query 'NetworkInterfaces[].{Id:NetworkInterfaceId,Status:Status,Description:Description,SubnetId:SubnetId,Groups:Groups[].GroupId,Instance:Attachment.InstanceId,Owner:TagSet[?Key==`eks:eni:owner`]|[0].Value,NodeInstance:TagSet[?Key==`node.k8s.amazonaws.com/instance_id`]|[0].Value}' \
+  --output table
+```
+
+For a specific Terraform error, inspect the blocking subnet or security group
+directly:
+
+```bash
+aws ec2 describe-network-interfaces \
+  --region "${REGION}" \
+  --filters "Name=subnet-id,Values=<subnet-id-from-error>" \
+  --output table
+
+aws ec2 describe-network-interfaces \
+  --region "${REGION}" \
+  --filters "Name=group-id,Values=<sg-id-from-error>" \
+  --output table
+```
+
+An orphaned AWS VPC CNI ENI usually has description `aws-K8S-<instance-id>`,
+tag `eks:eni:owner=amazon-vpc-cni`, status `available`, no attachment, and a
+`node.k8s.amazonaws.com/instance_id` tag whose EC2 instance no longer exists.
+After confirming the cluster and node instance are gone, delete that ENI and
+rerun `terraform destroy`:
+
+```bash
+aws ec2 delete-network-interface \
+  --region "${REGION}" \
+  --network-interface-id <orphan-eni-id>
 ```
 
 ## Migration From Terraform Helm Releases

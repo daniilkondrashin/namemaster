@@ -11,6 +11,11 @@ output "cluster_security_group_id" {
   value       = module.eks_cluster.cluster_security_group_id
 }
 
+output "node_security_group_id" {
+  description = "Security group id attached to EKS worker nodes and selected by Karpenter"
+  value       = module.eks_cluster.node_security_group_id
+}
+
 output "region" {
   description = "AWS region"
   value       = var.region
@@ -26,9 +31,19 @@ output "public_subnet_ids_csv" {
   value       = join(",", module.network.public_subnets)
 }
 
+output "private_subnet_ids_csv" {
+  description = "Comma-separated private subnet IDs used by EKS and Karpenter worker nodes"
+  value       = join(",", module.network.private_subnets)
+}
+
 output "private_subnet_azs_csv" {
   description = "Comma-separated availability zones used by private Karpenter subnets"
   value       = join(",", module.network.azs)
+}
+
+output "vpc_id" {
+  description = "VPC ID used by the EKS cluster"
+  value       = module.network.vpc_id
 }
 
 output "eks_admin_role_arn" {

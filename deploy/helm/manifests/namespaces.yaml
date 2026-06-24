@@ -22,13 +22,6 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: gitlab-runner
-  labels:
-    kubernetes.io/metadata.name: gitlab-runner
----
-apiVersion: v1
-kind: Namespace
-metadata:
   name: monitoring
   labels:
     kubernetes.io/metadata.name: monitoring

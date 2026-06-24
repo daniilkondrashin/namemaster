@@ -63,14 +63,3 @@ Default public hostname for the app.
 {{- printf "namemaster.%s" (default "opsbox.org" $global.domain) -}}
 {{- end -}}
 {{- end }}
-
-{{/*
-Create the name of the service account to use
-*/}}
-{{- define "namemaster.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "namemaster.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
-{{- end }}
