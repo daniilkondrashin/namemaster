@@ -76,7 +76,7 @@ docker run --rm -p 8080:8080 \
 
 ## Kubernetes Deploy
 
-The manifests use these project defaults:
+The Helm chart uses these project defaults:
 
 - image: `daniil3680/monitoring:latest`
 - imagePullSecret: `dockerhub-pull-secret`
@@ -85,24 +85,10 @@ The manifests use these project defaults:
 - Certificate namespace: `nginx-gateway`; owned by `deploy/helm/platform/gateway` in the Helm flow
 - ClusterIssuer: `letsencrypt-prod`
 
-Create the Docker Hub pull secret before applying the Deployment.
-
-Deploy core resources:
+Render the Kubernetes manifests from the chart instead of keeping generated YAML copies:
 
 ```bash
-kubectl apply -f docs/examples/monitoring-kubernetes/namespace.yaml
-kubectl apply -f docs/examples/monitoring-kubernetes/service-account.yaml
-kubectl apply -f docs/examples/monitoring-kubernetes/rbac.yaml
-kubectl apply -f docs/examples/monitoring-kubernetes/deployment.yaml
-kubectl apply -f docs/examples/monitoring-kubernetes/service.yaml
-kubectl apply -f docs/examples/monitoring-kubernetes/certificate.yaml
-kubectl apply -f docs/examples/monitoring-kubernetes/httproute.yaml
-```
-
-`docs/examples/monitoring-kubernetes/servicemonitor.yaml` is optional and requires the Prometheus Operator CRD:
-
-```bash
-kubectl apply -f docs/examples/monitoring-kubernetes/servicemonitor.yaml
+helm template kubernetes-monitor apps/monitoring/chart --namespace monitoring
 ```
 
 ## Helm Deploy
@@ -167,7 +153,7 @@ kubectl get httproute -n monitoring
 kubectl describe httproute kubernetes-monitor -n monitoring
 ```
 
-If the shared Gateway only allows routes from its own namespace, update `Gateway.spec.listeners[].allowedRoutes.namespaces` to allow the `monitoring` namespace. See `docs/examples/monitoring-kubernetes/gateway-listener-example.yaml` for a listener fragment.
+If the shared Gateway only allows routes from its own namespace, update `Gateway.spec.listeners[].allowedRoutes.namespaces` to allow the `monitoring` namespace. The shared Gateway chart in `deploy/helm/platform/gateway` configures this for the monitoring listener.
 
 ## cert-manager and TLS
 

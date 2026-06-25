@@ -15,15 +15,3 @@ variable "bucket_name" {
   type        = string
   default     = null
 }
-
-variable "lock_table_name" {
-  description = "DynamoDB table name for Terraform state locking"
-  type        = string
-  default     = "namemaster-terraform-locks"
-}
-
-variable "enable_deletion_protection" {
-  description = "Enable deletion protection for the DynamoDB lock table"
-  type        = bool
-  default     = true
-}

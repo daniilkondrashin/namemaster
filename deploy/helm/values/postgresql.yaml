@@ -2,6 +2,11 @@ auth:
   username: namemaster
   database: namemaster
 
+image:
+  # Bitnami chart 18.7.8 renders postgresql:latest. Pin the current digest so
+  # deploys stay reproducible while still using the supported bitnami repo.
+  digest: sha256:f67b10b185d344b15e9999b57bdbedb13b9a4c33aa3a939467ee519cec49d40e
+
 primary:
   persistence:
     storageClass: gp3

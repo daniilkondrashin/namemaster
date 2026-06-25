@@ -57,18 +57,21 @@ Run the namemaster tests:
 docker-compose -f docker-compose.test.yaml up --exit-code-from web
 ```
 
-## Private Docker Hub Images
+## Docker Hub Images
 
-Both application charts use `dockerhub-pull-secret` by default. Create it in each
-namespace that pulls private images:
+The default `namemaster` image is public and does not need an image pull secret.
+Create `dockerhub-pull-secret` only in namespaces that pull private images or
+need authenticated Docker Hub pulls:
 
 ```bash
 export DOCKERHUB_USERNAME="username"
 export DOCKERHUB_TOKEN="paste-dockerhub-access-token-here"
 
-NAMESPACE=namemaster scripts/create-dockerhub-pull-secret.example.sh
 NAMESPACE=monitoring scripts/create-dockerhub-pull-secret.example.sh
 ```
+
+For a private `namemaster` image, create the secret in `namemaster` and set
+`imagePullSecrets[0].name=dockerhub-pull-secret` when installing the chart.
 
 ## Namemaster Secret Key
 
